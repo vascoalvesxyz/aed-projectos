@@ -15,6 +15,7 @@
 #define ROOT_IDX 0
 #define LEFT 0
 #define RIGHT 1
+#define TREE_IDX_MAX 4294967295
 
 typedef struct BinTreeNode {
     int32_t data;
@@ -42,6 +43,8 @@ extern tree_idx tree_binary_get_new_elem(BinTree *btree, int32_t data);
 extern void     tree_binary_insert(BinTree btree, tree_idx where, tree_idx node, int dir);
 extern void     tree_binary_print(BinTree *btree);
 extern void     tree_binary_fill_randomly(BinTree *btree);
+extern tree_idx tree_binary_search_key(BinTree *btree, int32_t key);
+
 
 int 
 randint(int a, int b) {
@@ -69,6 +72,7 @@ tree_binary_destroy(BinTree btree) {
 int
 tree_binary_resize(BinTree *btree) {
     uint16_t new_capacity = btree->capacity + TREE_BINARY_DARRAY_GROWTH;
+
     BinaryTreeRoot* new_root = NULL; 
 
     while (new_root == NULL) {
@@ -146,7 +150,7 @@ tree_binary_fill_randomly(BinTree *btree) {
     BinTreeNode *node_ptr = btree->root;
 
     int32_t *random_data = (int32_t*) malloc(sizeof(int32_t) * btree->capacity);
-    assert(random_data);
+    assert(random_data); 
 
     for (uint32_t i = 0; i < btree->capacity; i++) {
         random_data[i] = i;
@@ -170,13 +174,40 @@ tree_binary_fill_randomly(BinTree *btree) {
     free(random_data);
 }
 
+tree_idx
+tree_binary_search_key(BinTree *btree, int32_t key) {
+        /* Helper function */
+    tree_idx tree_binary_search(BinTreeNode *root, tree_idx idx, int32_t key) {
+        if (idx == TREE_IDX_MAX) return TREE_IDX_MAX; // Base case: invalid index
+
+        BinTreeNode node = root[idx];
+        if (node.data == key) return idx; // Key found
+
+        // Search in the left subtree
+        tree_idx left = tree_binary_search(root, node.idx_left, key);
+        if (left != TREE_IDX_MAX) return left; // Key found in the left subtree
+
+        // Search in the right subtree
+        tree_idx right = tree_binary_search(root, node.idx_right, key);
+        if (right != TREE_IDX_MAX) return right; // Key found in the right subtree
+
+        return TREE_IDX_MAX; // Key not found
+    }
+
+    BinTreeNode* root = btree->root;
+    tree_idx result = tree_binary_search(root, 0, key);  
+    return result;
+}
+
 int
 main() {
     (void) srand(time(NULL));
-    BinTree btree = tree_binary_create(1000000, 16);
+    BinTree btree = tree_binary_create(100, 16);
     /*BinTree btree = tree_binary_create(10, 16);*/
     (void) tree_binary_fill_randomly(&btree);
     (void) tree_binary_print(&btree);
+
+    tree_binary_search_key(&btree, 10);
     (void) tree_binary_destroy(btree);
     return 0;
 }
