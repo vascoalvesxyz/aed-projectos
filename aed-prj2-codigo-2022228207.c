@@ -1,3 +1,10 @@
+/* Código feito para C99, compilado com GCC 14.2.1 e flags -O2 e --fast-math
+ * Hardware Original: SATELLITE_C50-A PSCG6P-01YAR1, 
+ * CPU: Intel i5-3320M (4) @ 3.300GHz, GPU: GPU: Intel 3rd Gen Core processor Graphics Controller
+ * RAM: 7821MiB, SSD SATA3 1TB
+ * 
+ * Aluno: Vasco Alves, 2022228207
+*/
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
