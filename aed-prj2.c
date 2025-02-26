@@ -18,14 +18,18 @@
 #define RIGHT 1
 #define TREE_IDX_MAX 4294967295
 #define SEED 95911405
-
-typedef struct BinTreeNode {
-    int32_t data;
-    uint32_t idx_left;
-    uint32_t idx_right;
-} BinTreeNode ;
+#define AVERAGE 10000
+#define TREESIZE 1000000
 
 typedef uint32_t tree_idx;
+typedef int32_t key_t;
+
+typedef struct BinTreeNode {
+    key_t data;
+    tree_idx idx_left;
+    tree_idx idx_right;
+} BinTreeNode ;
+
 typedef struct BinTreeNode BinaryTreeRoot;
 
 typedef struct BinaryTree {
@@ -36,19 +40,56 @@ typedef struct BinaryTree {
 
 extern int randint(int a, int b);
 
-extern BinTree  tree_binary_create(uint32_t initial_capacity, int32_t data); // Creates binary tree
-extern void     tree_binary_destroy(BinTree btree); // Frees binary tree
-extern int      tree_binary_resize(BinTree *btree); 
-extern void     tree_binary_init(tree_idx node, int32_t data);
-extern void     tree_binary_insert(BinTree btree, tree_idx where, tree_idx node, int dir);
-extern tree_idx tree_binary_get_new_elem(BinTree *btree, int32_t data);
-extern void     tree_binary_insert(BinTree btree, tree_idx where, tree_idx node, int dir);
-extern void     tree_binary_print(BinTree *btree);
-extern void     tree_binary_print_arr(BinTree *btree);
-extern void     tree_binary_gen_conj_a(BinTree *btree);
-extern void     tree_binary_gen_conj_b(BinTree *btree);
-extern tree_idx tree_binary_search_key(BinTree *btree, int32_t key);
 
+extern key_t*   arr_gen_conj_a(uint64_t size); // ordem crescent, pouca repetição
+extern key_t*   arr_gen_conj_b(uint64_t size); // ordem decrescent, pouca repetição
+extern key_t*   arr_gen_conj_c(uint64_t size); // ordem aleatoria, pouca repetição
+extern key_t*   arr_gen_conj_c(uint64_t size); // ordem aleatoria, 90% repetidos
+
+extern key_t*   arr_gen_conj_a(uint64_t size) {
+    key_t* new_arr = (key_t*) malloc( sizeof(key_t) * size);
+    
+    if (new_arr) {
+        key_t offset = 0;
+        for (uint64_t i = 0; i < size; i++) {
+            if (randint(0,9) == 0) offset += 1; 
+            new_arr[i] = i - offset; 
+        }
+    }
+    return new_arr;
+} 
+
+extern key_t*   arr_gen_conj_b(uint64_t size) {
+    key_t* new_arr = (key_t*) malloc( sizeof(key_t) * size);
+    
+    if (new_arr) {
+        key_t offset = 0;
+        for (uint64_t i = 0; i < size; i++) {
+            if (randint(0,9) == 0) offset += 1; 
+            new_arr[i] = size-i+offset; 
+        }
+    }
+
+    return new_arr;
+}
+
+/*extern key_t*   arr_gen_conj_c(uint64_t size) { }*/
+/*extern key_t*   arr_gen_conj_c(uint64_t size) { }*/
+
+extern BinTree  tree_binary_create(uint32_t initial_capacity, int32_t data); // Creates binary tree with inicialized elements
+extern void     tree_binary_insert(BinTree btree, tree_idx where, tree_idx node, int dir);
+extern void     tree_binary_insert_arr(BinTree btree, tree_idx where, key_t arr[]);
+extern void     tree_binary_destroy(BinTree btree); // Frees binary tree
+extern int      tree_binary_resize(BinTree *btree);  // Resize binary tree
+
+extern tree_idx tree_binary_get_new_elem(BinTree *btree, int32_t data);
+extern void     tree_binary_print(BinTree *btree); // in order print according to tree
+extern void     tree_binary_print_arr(BinTree *btree); // print the array of nodes
+extern tree_idx tree_binary_search_key(BinTree btree, int32_t key); // search for key in binary tree
+extern double   tree_binary_test(BinTree btree); // test tree 
+
+typedef BinTree BSTree;
+extern BSTree   tree_binary_to_bst(BinTree* btree);
 
 int 
 randint(int a, int b) {
@@ -159,80 +200,8 @@ tree_binary_print_arr(BinTree *btree) {
     (void) puts("\n");
 }
 
-void
-tree_binary_gen_conj_a(BinTree *btree) {
-/* Conjunto em ordem crescente com repetição minima */ 
-    BinTreeNode *node_ptr = btree->root;
-
-    (void) printf("btree->capacity = %d\n", btree->capacity);
-    for (tree_idx idx = 0; idx < btree->capacity ; idx++) {
-        node_ptr[idx].data = idx;
-        node_ptr[idx].idx_left = (2*idx+1 < btree->capacity) ? 2*idx+1 : 0;
-        node_ptr[idx].idx_right = (2*idx+2 < btree->capacity) ? 2*idx+2 : 0;
-        btree->elements++;
-    }
-}
-
-void
-tree_binary_gen_conj_b(BinTree *btree) {
-/* Conjunto em ordem com repetição minima */ 
-    BinTreeNode *node_ptr = btree->root;
-
-    int32_t *random_data = (int32_t*) malloc(sizeof(int32_t) * btree->capacity);
-
-    assert(random_data); 
-
-    int offset = 0;
-    for (uint32_t i = 0; i < btree->capacity; i++) {
-        random_data[btree->capacity-1-i] = i - offset;
-        if (randint(0,10) == 5) {
-            offset += 1;
-        }
-    }
-
-    (void) printf("btree->capacity = %d\n", btree->capacity);
-    for (tree_idx idx = 0; idx < btree->capacity ; idx++) {
-        node_ptr[idx].data = random_data[idx];
-        node_ptr[idx].idx_left = (2*idx+1 < btree->capacity) ? 2*idx+1 : 0;
-        node_ptr[idx].idx_right = (2*idx+2 < btree->capacity) ? 2*idx+2 : 0;
-        btree->elements++;
-    }
-
-    free(random_data);
-}
-
-void
-tree_binary_gen_conj_c(BinTree *btree) {
-/* Conjunto em ordem com repetição minima */ 
-    BinTreeNode *node_ptr = btree->root;
-
-    int32_t *random_data = (int32_t*) malloc(sizeof(int32_t) * btree->capacity);
-
-    assert(random_data); 
-
-    int offset = 0;
-    for (uint32_t i = 0; i < btree->capacity; i++) {
-        random_data[btree->capacity-1-i] = i - offset;
-        if (randint(0,10) == 5) {
-            offset += 1;
-        }
-    }
-
-    // shjuffleadadadn
-
-    (void) printf("btree->capacity = %d\n", btree->capacity);
-    for (tree_idx idx = 0; idx < btree->capacity ; idx++) {
-        node_ptr[idx].data = random_data[idx];
-        node_ptr[idx].idx_left = (2*idx+1 < btree->capacity) ? 2*idx+1 : 0;
-        node_ptr[idx].idx_right = (2*idx+2 < btree->capacity) ? 2*idx+2 : 0;
-        btree->elements++;
-    }
-
-    free(random_data);
-}
-
 tree_idx
-tree_binary_search_key(BinTree *btree, int32_t key) {
+tree_binary_search_key(BinTree btree, int32_t key) {
 
     /*Helper function */
     tree_idx tree_binary_search(BinTreeNode *root, tree_idx idx, int32_t key) {
@@ -252,7 +221,7 @@ tree_binary_search_key(BinTree *btree, int32_t key) {
         return TREE_IDX_MAX; // Key not found
     }
 
-    BinTreeNode* root = btree->root;
+    BinTreeNode* root = btree.root;
     if (root->data == key) return ROOT_IDX; 
 
     tree_idx left = tree_binary_search(root, root->idx_left, key);
@@ -264,18 +233,37 @@ tree_binary_search_key(BinTree *btree, int32_t key) {
     return TREE_IDX_MAX; 
 }
 
-#define AVERAGE 10000
-#define TREESIZE 1000000
+double
+tree_binary_test(BinTree btree) {
+    double time_total = 0;
+    clock_t start = 0, end = 0;
 
-double tree_binary_test(BinTree btree);
+    for (int i = 0; i < AVERAGE; i++) {
+        int search = randint(0, TREESIZE-1);
+        start = clock();
+        int64_t result = tree_binary_search_key(btree, search);
+        end = clock();
+        if (result != TREESIZE) printf("Found %d in index %ld.\n", search, result);
+        else printf("%d not found!.\n", search);
+        time_total += ((double) (end - start)*1000) / CLOCKS_PER_SEC;
+    }
+
+    return time_total / AVERAGE;
+}
 
 int
 main() {
 
     srand(SEED);
 
-    BinTree btree = tree_binary_create(TREESIZE, 16);
-    (void) tree_binary_gen_conj_a(&btree);
+    /* Arvore B */
+    key_t *key_conj_a = arr_gen_conj_a(TREESIZE);
+    BinTree btree = tree_binary_create(TREESIZE, 0);
+    tree_binary_insert_arr();
+
+    free(key_conj_a);
+
+    (void) tree_binary_print_arr(&btree);
     (void) printf("Binary Tree (CONJ A) in %0.3lf ms.\n",  tree_binary_test(btree) );
 
     (void) tree_binary_gen_conj_b(&btree);
@@ -286,19 +274,3 @@ main() {
     return 0;
 }
 
-double tree_binary_test(BinTree btree) {
-    double time_total = 0;
-    clock_t start = 0, end = 0;
-
-    for (int i = 0; i < AVERAGE; i++) {
-        int search = randint(0, TREESIZE-1);
-        start = clock();
-        (void) tree_binary_search_key(&btree, search);
-        end = clock();
-        /*if (result != TREESIZE) printf("Found %d in index %ld.\n", search, result);*/
-        /*else printf("%d not found!.\n", search);*/
-        time_total += ((double) (end - start)*1000) / CLOCKS_PER_SEC;
-    }
-
-    return time_total / AVERAGE;
-}
