@@ -19,7 +19,7 @@
 #define TREE_IDX_MAX 4294967295
 #define SEED 95911405
 #define AVERAGE 10000
-#define TREESIZE 1000000
+#define TREESIZE 1000
 
 typedef uint32_t tree_idx;
 typedef int32_t key_t;
@@ -30,23 +30,45 @@ typedef struct BinTreeNode {
     tree_idx idx_right;
 } BinTreeNode ;
 
-typedef struct BinTreeNode BinaryTreeRoot;
-
 typedef struct BinaryTree {
     uint32_t capacity;
     uint32_t elements;
-    BinaryTreeRoot *root;
+    BinTreeNode *root;
 } BinTree ;
 
+/* Helper function */
 extern int randint(int a, int b);
-
-
 extern key_t*   arr_gen_conj_a(uint64_t size); // ordem crescent, pouca repetição
 extern key_t*   arr_gen_conj_b(uint64_t size); // ordem decrescent, pouca repetição
 extern key_t*   arr_gen_conj_c(uint64_t size); // ordem aleatoria, pouca repetição
 extern key_t*   arr_gen_conj_c(uint64_t size); // ordem aleatoria, 90% repetidos
+extern void     arr_print(key_t* arr, uint64_t size);
 
-extern key_t*   arr_gen_conj_a(uint64_t size) {
+/* Binary Tree */
+extern BinTree  tree_binary_create(uint32_t initial_capacity); // Creates binary tree with inicialized elements
+extern void     tree_binary_destroy(BinTree btree); // Frees binary tree
+extern void     tree_binary_resize(BinTree *btree);  // Resize binary tree
+extern void     tree_binary_insert(BinTree *btree, key_t key); // insert key in binary tree
+extern void     tree_binary_insert_arr(BinTree *btree, key_t* arr, size_t size); // insert array of keys
+
+/* Printin and testing the binary tree */
+extern void     tree_binary_print_inorder(BinTree *btree); // in order print according to tree
+extern void     tree_binary_print(BinTree *btree); 
+extern tree_idx tree_binary_search_key(BinTree btree, int32_t key); // search for key in binary tree
+extern double   tree_binary_test(key_t* arr);
+
+int 
+randint(int a, int b) {
+    if (a > b) {
+        a ^= b;
+        b ^= a ;
+        a ^= b;
+    }
+    return a + rand() % (b - a + 1);
+}
+
+key_t*
+arr_gen_conj_a(uint64_t size) {
     key_t* new_arr = (key_t*) malloc( sizeof(key_t) * size);
     
     if (new_arr) {
@@ -59,7 +81,8 @@ extern key_t*   arr_gen_conj_a(uint64_t size) {
     return new_arr;
 } 
 
-extern key_t*   arr_gen_conj_b(uint64_t size) {
+key_t*
+arr_gen_conj_b(uint64_t size) {
     key_t* new_arr = (key_t*) malloc( sizeof(key_t) * size);
     
     if (new_arr) {
@@ -73,39 +96,46 @@ extern key_t*   arr_gen_conj_b(uint64_t size) {
     return new_arr;
 }
 
-/*extern key_t*   arr_gen_conj_c(uint64_t size) { }*/
-/*extern key_t*   arr_gen_conj_c(uint64_t size) { }*/
-
-extern BinTree  tree_binary_create(uint32_t initial_capacity, int32_t data); // Creates binary tree with inicialized elements
-extern void     tree_binary_insert(BinTree btree, tree_idx where, tree_idx node, int dir);
-extern void     tree_binary_insert_arr(BinTree btree, tree_idx where, key_t arr[]);
-extern void     tree_binary_destroy(BinTree btree); // Frees binary tree
-extern int      tree_binary_resize(BinTree *btree);  // Resize binary tree
-
-extern tree_idx tree_binary_get_new_elem(BinTree *btree, int32_t data);
-extern void     tree_binary_print(BinTree *btree); // in order print according to tree
-extern void     tree_binary_print_arr(BinTree *btree); // print the array of nodes
-extern tree_idx tree_binary_search_key(BinTree btree, int32_t key); // search for key in binary tree
-extern double   tree_binary_test(BinTree btree); // test tree 
-
-typedef BinTree BSTree;
-extern BSTree   tree_binary_to_bst(BinTree* btree);
-
-int 
-randint(int a, int b) {
-    if (a > b) {
-        a ^= b;
-        b ^= a ;
-        a ^= b;
+key_t*
+arr_gen_conj_c(uint64_t size) {
+    /* Array crescente com repetição minima */
+    key_t* new_arr = arr_gen_conj_a(size);
+    
+    if (new_arr) {
+        /* Knuth Shuffle */
+        int i, j; 
+        for (j = size-1; j > 0; j--) {
+            i = randint(0, j-1);
+            new_arr[i] ^= new_arr[j];
+            new_arr[j] ^= new_arr[i];
+            new_arr[i] ^= new_arr[j];
+        }
     }
-    return a + rand() % (b - a + 1);
+    return new_arr;
+} 
+
+
+void
+arr_print(key_t* arr, uint64_t size) {
+    for (key_t k = 0; k < size; k++)
+        printf("arr[%d] = %d\n", k, arr[k]);
 }
 
+
 BinTree
-tree_binary_create(uint32_t initial_capacity, int32_t data) {
+tree_binary_create(uint32_t initial_capacity) {
     BinTree btree = {initial_capacity, 0, NULL};
-    btree.root = malloc(sizeof(BinTreeNode)*initial_capacity);
-    btree.root->data = data;
+    btree.root = (BinTreeNode*) malloc(sizeof(BinTreeNode)*initial_capacity);
+
+    if (btree.root) {
+        BinTreeNode* nodeptr = btree.root;
+        for (BinTreeNode* endptr = nodeptr + initial_capacity; nodeptr != endptr; nodeptr++ ) {
+            nodeptr->data = 0;
+            nodeptr->idx_left = 0;
+            nodeptr->idx_right = 0;
+        }
+    }
+
     return btree;
 }
 
@@ -114,90 +144,120 @@ tree_binary_destroy(BinTree btree) {
     free(btree.root);
 }
 
-int
+void
 tree_binary_resize(BinTree *btree) {
     uint16_t new_capacity = btree->capacity + TREE_BINARY_DARRAY_GROWTH;
 
-    BinaryTreeRoot* new_root = NULL; 
-
-    while (new_root == NULL) {
-        new_root = (BinaryTreeRoot*) realloc(btree->root, sizeof(BinTreeNode)*new_capacity);
+    BinTreeNode* new_root = NULL; 
+    uint64_t tries = 0;
+    while (new_root == NULL && tries < 1000) {
+        new_root = (BinTreeNode*) realloc(btree->root, sizeof(BinTreeNode)*new_capacity);
+        tries++;
     }
 
-    if (new_root) {
-        btree->capacity = new_capacity;
-        btree->root = new_root;
-        return 0;
+    if (new_root == NULL) {
+        puts("Failed to allocate enough memory for tree resize.");
+        exit(EXIT_FAILURE);
     }
 
-    return 1;
+    btree->capacity = new_capacity;
+    btree->root = new_root;
 }
 
 void
-tree_binary_insert(BinTree btree, tree_idx where, tree_idx what, int dir) {
-    if (btree.elements >= btree.capacity) return;
+tree_binary_insert(BinTree *btree, key_t key) {
+    if (btree->elements == btree-> capacity) {
+        tree_binary_resize(btree);
+    }
 
-    BinTreeNode* node = btree.root + where;
-    if (node) {
-        if (dir == 0) {
-            node->idx_left = what; 
-        } else if (dir == 1) {
-            node->idx_right = what; 
+    BinTreeNode* root = btree->root;
+    BinTreeNode* node = NULL;
+    uint32_t inicial_elements = btree->elements;
+
+    /* Está vazia */
+    if (inicial_elements == 0) {
+        node = btree->root;
+    } else {
+        /* Devido às propriedades das àrvores binárias implicitas,
+         * o indice corresponde ao número de elementos-1,
+         * como é o próximo indice, -1+1 = 0 */
+        node = &root[inicial_elements];
+        /* O pai do NOVO filho está em (Nº Elementos+1) / 2 arredondado para baixo -1 para o indice
+         * O que pode ser simplificado para simplesmente o numero de elements>>1 
+        /* O módulo diz-nos se é para a esquerda ou direita */
+        BinTreeNode* parent_node = &root[inicial_elements>>1]; 
+        if (inicial_elements % 2 == 0) {
+            parent_node->idx_left = inicial_elements;
+        } else {
+            parent_node->idx_right = inicial_elements;
         }
     }
-    return;
-}
 
-tree_idx
-tree_binary_get_new_elem(BinTree *btree, int32_t data) {
-
-    int resize_success = 0;
-    if (btree->elements >= btree->capacity) {
-        resize_success = tree_binary_resize(btree);
-    }
-
-    if (resize_success == 0) {
-        btree->elements += 1;
-
-        BinTreeNode *new_node = btree->root+btree->elements;
-        new_node->data = data;
-        new_node->idx_left = 0;
-        new_node->idx_right = 0;
-
-        return btree->elements;
-    }
-
-    return 0;
+    /* Inserir nova chave e  */
+    node->data = key;
+    btree->elements = inicial_elements + 1;
 }
 
 void
-tree_binary_print(BinTree *btree) {
+tree_binary_insert_arr(BinTree *btree, key_t* arr, size_t size) {
+    for (key_t k = 0; k < size; k++ )
+        tree_binary_insert(btree, arr[k]);
+}
+
+void
+tree_binary_print_inorder(BinTree *btree) {
 
     /* Helper function to print the entire binary tree */
-    void tree_binary_print_inorder(BinTree *btree, tree_idx idx) {
+    void inorder(BinTree *btree, tree_idx idx) {
         if (idx == 0) return; 
         BinTreeNode* node = btree->root + idx;
-        (void) tree_binary_print_inorder(btree, node->idx_left);
+        (void) inorder(btree, node->idx_left);
         (void) printf("%d ", node->data);
-        (void) tree_binary_print_inorder(btree, node->idx_right);
+        (void) inorder(btree, node->idx_right);
     }
 
     BinTreeNode* root = btree->root;
     (void) printf("In-order traversal of the binary tree:\n");
     (void) printf("%d ", root->data);
-    (void) tree_binary_print_inorder(btree, root->idx_left);
-    (void) tree_binary_print_inorder(btree, root->idx_right);
+    (void) inorder(btree, root->idx_left);
+    (void) inorder(btree, root->idx_right);
     (void) puts("\n");
 }
 
 void
-tree_binary_print_arr(BinTree *btree) {
+tree_binary_print(BinTree *btree) {
+    /* Os niveis de um arevore binária completa implicita vão ter os indices
+     * Nivel 1: 0
+     * Nivel 2: 1, 2
+     * Nivel 3: 3, 4, 5, 6
+     * A nossa arvore não é perfeita por isso temos que verificar se cada indice tem pai
+     */
+    uint32_t levels = 0;
+    uint32_t n_elem = btree->elements;
+
+    /* Contar niveis */
+    while (n_elem > 1) {
+        n_elem = n_elem >> 1;
+        levels++;
+    }
 
     BinTreeNode *root = btree->root;
-    for (tree_idx idx = 0; idx < btree->elements; idx++) {
-         (void) printf("root[%d] = %d ", idx, root[idx].data);
+    printf("%2d\n", root->data);
+
+    /* Imprimir cada nivel */
+    uint32_t idx = 1;
+    uint32_t n_nodes = 1;
+    for (uint32_t l = 0; l < levels; l++) {
+        /* Cada nivel tem o dobro dos elementos no maximo  */
+        n_nodes = n_nodes << 1;
+        for (uint32_t i = 0; i < n_nodes; i++) {
+            if (idx == btree->elements-1) break;
+            printf("%2d  ", (root+idx)->data );
+            idx++;
+        }
+        puts("");
     }
-    (void) puts("\n");
+
 }
 
 tree_idx
@@ -234,21 +294,23 @@ tree_binary_search_key(BinTree btree, int32_t key) {
 }
 
 double
-tree_binary_test(BinTree btree) {
-    double time_total = 0;
+tree_binary_test(key_t* arr) {
+
+    BinTree btree;
     clock_t start = 0, end = 0;
+    clock_t total = 0;
 
     for (int i = 0; i < AVERAGE; i++) {
-        int search = randint(0, TREESIZE-1);
         start = clock();
-        int64_t result = tree_binary_search_key(btree, search);
+        btree = tree_binary_create(TREESIZE);
+        tree_binary_insert_arr(&btree, arr, TREESIZE);
         end = clock();
-        if (result != TREESIZE) printf("Found %d in index %ld.\n", search, result);
-        else printf("%d not found!.\n", search);
-        time_total += ((double) (end - start)*1000) / CLOCKS_PER_SEC;
-    }
 
-    return time_total / AVERAGE;
+        total += (end-start);
+        tree_binary_destroy(btree);
+    }
+    double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
+    return total_time / AVERAGE;
 }
 
 int
@@ -256,21 +318,20 @@ main() {
 
     srand(SEED);
 
-    /* Arvore B */
-    key_t *key_conj_a = arr_gen_conj_a(TREESIZE);
-    BinTree btree = tree_binary_create(TREESIZE, 0);
-    tree_binary_insert_arr();
+    key_t *key_ptr = arr_gen_conj_a(TREESIZE);
+    double testtime = tree_binary_test(key_ptr);
+    printf("Binary Tree - Conj. A = %lfms\n", testtime);
+    free(key_ptr);
 
-    free(key_conj_a);
+    key_ptr = arr_gen_conj_b(TREESIZE);
+    testtime = tree_binary_test(key_ptr);
+    printf("Binary Tree - Conj. B = %lfms\n", testtime);
+    free(key_ptr);
 
-    (void) tree_binary_print_arr(&btree);
-    (void) printf("Binary Tree (CONJ A) in %0.3lf ms.\n",  tree_binary_test(btree) );
-
-    (void) tree_binary_gen_conj_b(&btree);
-    (void) printf("Binary Tree (CONJ B) in %0.3lf ms.\n",  tree_binary_test(btree) );
-
-    (void) tree_binary_destroy(btree);
+    key_ptr = arr_gen_conj_c(TREESIZE);
+    testtime = tree_binary_test(key_ptr);
+    printf("Binary Tree - Conj. C = %lfms\n", testtime);
+    free(key_ptr);
 
     return 0;
 }
-
