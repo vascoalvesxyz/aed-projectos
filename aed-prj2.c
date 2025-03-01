@@ -16,10 +16,9 @@
 #define IDX_INVALID 4294967295
 #define SEED 95911405
 
-#define _DEBUG_
-#ifdef _DEBUG_
-#define AVERAGE 10
-#define TREESIZE 100000
+#ifdef DEBUG
+#define AVERAGE 100
+#define TREESIZE 10000
 #else
 #define AVERAGE 10
 #define TREESIZE 1000000
@@ -420,19 +419,12 @@ tree_avl_destroy(AVLTree* avl) {
 void
 tree_avl_resize(AVLTree *avl) {
     idx_t new_capacity = avl->capacity*RESIZE_FACTOR;
-
-    if (new_capacity <= avl->capacity) {
+    if (new_capacity >= IDX_INVALID) {
         perror("AVL tree exceeded maximum capacity.");
         exit(EXIT_FAILURE);
     }
 
-    AVLNode* new_nodes = NULL; 
-    uint64_t tries = 0;
-    while (new_nodes == NULL && tries < 1000) {
-        new_nodes = (AVLNode*) realloc(avl->nodes, sizeof(AVLNode)*new_capacity);
-        tries++;
-    }
-
+    AVLNode* new_nodes = (AVLNode*) realloc(avl->nodes, sizeof(AVLNode)*new_capacity);
     if (new_nodes == NULL) {
         perror("Failed to allocate enough memory for tree resize.");
         exit(EXIT_FAILURE);
@@ -495,11 +487,6 @@ _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
     
     if (node_index == IDX_INVALID) {
         idx_t new_index = avl->elements;
-
-        if (avl->elements == avl->capacity) {
-            tree_avl_resize(avl);
-        }
-
         AVLNode* new_node = &avl->nodes[new_index];
         new_node->key = key;
         new_node->left = IDX_INVALID;
@@ -549,6 +536,12 @@ _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
 
 void
 tree_avl_insert(AVLTree *avl, int key) {
+
+    if (avl->elements == avl->capacity) {
+        tree_avl_resize(avl);
+    }
+
+
     /* For an empty tree, set the new node as root. */
     if (avl->elements == 0) {
         avl->tree_root = _tree_avl_insert_recursive(avl, IDX_INVALID, key);
@@ -556,7 +549,6 @@ tree_avl_insert(AVLTree *avl, int key) {
         avl->tree_root = _tree_avl_insert_recursive(avl, avl->tree_root, key);
     }
 }
-
 void
 tree_avl_in_order(AVLTree *avl) {
 

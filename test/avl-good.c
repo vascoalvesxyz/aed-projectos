@@ -12,7 +12,7 @@
 /*idx_t *free_idx_stack;*/
 
 #define IDX_INVALID 4294967295
-#define RESIZE_FACTOR 1.61803
+#define RESIZE_FACTOR 1.6108
 
 typedef uint32_t idx_t;
 
@@ -84,12 +84,7 @@ tree_avl_resize(AVLTree *avl) {
         exit(EXIT_FAILURE);
     }
 
-    AVLNode* new_nodes = NULL; 
-    uint64_t tries = 0;
-    while (new_nodes == NULL && tries < 1000) {
-        new_nodes = (AVLNode*) realloc(avl->nodes, sizeof(AVLNode)*new_capacity);
-        tries++;
-    }
+    AVLNode* new_nodes = (AVLNode*) realloc(avl->nodes, sizeof(AVLNode)*new_capacity);
 
     if (new_nodes == NULL) {
         perror("Failed to allocate enough memory for tree resize.");
@@ -152,11 +147,6 @@ _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
     
     if (node_index == IDX_INVALID) {
         idx_t new_index = avl->elements;
-
-        if (avl->elements == avl->capacity) {
-            tree_avl_resize(avl);
-        }
-
         AVLNode* new_node = &avl->nodes[new_index];
         new_node->key = key;
         new_node->left = IDX_INVALID;
@@ -206,6 +196,12 @@ _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
 
 void
 tree_avl_insert(AVLTree *avl, int key) {
+
+    if (avl->elements == avl->capacity) {
+        tree_avl_resize(avl);
+    }
+
+
     /* For an empty tree, set the new node as root. */
     if (avl->elements == 0) {
         avl->tree_root = _tree_avl_insert_recursive(avl, IDX_INVALID, key);
@@ -252,6 +248,7 @@ AVLNode*
 tree_avl_search(AVLTree *avl, int key) {
     idx_t current_index = avl->tree_root;
     while (current_index != IDX_INVALID) {
+        printf("Current Index: %d\n", current_index);
         if (avl->nodes[current_index].key == key)
             return &avl->nodes[current_index];
             
@@ -266,24 +263,22 @@ tree_avl_search(AVLTree *avl, int key) {
 
 int
 main() {
-    AVLTree avl = tree_avl_create(3);
+    AVLTree avl = tree_avl_create(10);
 
-    tree_avl_insert(&avl, 1);
-    tree_avl_insert(&avl, 2);
-    tree_avl_insert(&avl, 4);
-    tree_avl_insert(&avl, 5);
-    tree_avl_insert(&avl, 6);
-    tree_avl_insert(&avl, 3);
-    tree_avl_insert(&avl, 6);
+    for (int i = 0; i < 1000000; i++) {
+        tree_avl_insert(&avl, i);
+    }
 
     printf("Inorder traversal of AVL tree: ");
     tree_avl_in_order(&avl);
 
-    AVLNode* search = tree_avl_search(&avl, 5);
+    AVLNode* search = tree_avl_search(&avl, 1);
     if (search)
-        printf("Found key %d = %d\n", 5, search->key);
+        printf("Found key %d = %d\n", 1, search->key);
     else
         puts("Not found");
+    
+    printf("avl.capacity = %d\n", avl.capacity);
 
     tree_avl_destroy(&avl);
     return 0;
