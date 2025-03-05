@@ -16,8 +16,9 @@
 #define IDX_INVALID 4294967295
 #define SEED 95911405
 
+#define DEBUG
 #ifdef DEBUG
-#define AVERAGE 100
+#define AVERAGE 10
 #define TREESIZE 10000
 #else
 #define AVERAGE 10
@@ -49,14 +50,26 @@ typedef struct AVLNode {
 
 typedef struct AVLTree {
     AVLNode *nodes;
-    idx_t tree_root;
+    idx_t tree_root; // rotations cause the root to change
     idx_t elements;
     idx_t capacity;
 } AVLTree; // 20 bytes
 
+typedef struct RBNode {
+    idx_t left;       
+    idx_t right;      
+    key_t key;             
+} rb_node_t;
+
+typedef struct RBTree {
+    rb_node_t *nodes;
+    uint32_t elements;
+    uint32_t capacity;
+} RBTree;
+
 /* === HELPER FUNCTIONS === */
-static int      randint(int a, int b);
-static int      max(int a, int b);
+static inline int randint(int a, int b);
+static inline int max(int a, int b);
 static key_t*   arr_gen_conj_a(key_t size); // ordem crescent, pouca repetição
 static key_t*   arr_gen_conj_b(key_t size); // ordem decrescent, pouca repetição
 static key_t*   arr_gen_conj_c(key_t size); // ordem aleatoria, pouca repetição
@@ -72,7 +85,7 @@ extern void     tree_binary_insert_arr(BinTree *btree, key_t* arr, key_t size); 
 extern void     tree_binary_print_inorder(BinTree *btree); // in order print according to tree
 extern void     tree_binary_print(BinTree *btree);  // print by levels for visual accuracy
 extern idx_t    tree_binary_search_key_inorder(BinTree btree, int32_t key); // search for key in binary tree by order
-extern idx_t    tree_binary_search_key_breadth(BinTree btree, int32_t key); // search for key in binary tree by breadth
+extern idx_t    tree_binary_search_key_level(BinTree btree, int32_t key); // faster than inorder because of this structure
 extern double   tree_binary_test(key_t* arr);
 
 /* ===== AVL TREE ===== */
@@ -89,8 +102,16 @@ extern void     tree_avl_insert_arr(AVLTree *avl, key_t* arr, size_t size);
 extern AVLNode* tree_avl_search(AVLTree *avl, int key);
 extern void     tree_avl_in_order(AVLTree *avl); // in-order print
 
+/* ===== RED BLACK TREE ===== */
+static inline int distance(int a, int b);
+extern RBTree   rb_tree_create(uint32_t initial_capacity);
+extern void     rb_tree_destroy(RBTree *vp);
+extern void     rb_tree_resize(RBTree *tree);
+extern int      rb_tree_insert(RBTree *tree, int key);
+extern key_t    rb_tree_search(RBTree *tree, int key);
+
 /* ==== FUNCTION DECLATRATIONS ==== */
-static int 
+static inline int 
 randint(int a, int b) {
     if (a > b) {
         a ^= b;
@@ -100,7 +121,7 @@ randint(int a, int b) {
     return a + rand() % (b - a + 1);
 }
 
-static int
+static inline int
 max(int a, int b) {
     return (a > b) ? a : b; 
 }
@@ -138,6 +159,7 @@ arr_gen_conj_b(key_t size) {
 
 static key_t*
 arr_gen_conj_c(key_t size) {
+
     /* Array crescente com repetição minima */
     key_t* new_arr = arr_gen_conj_a(size);
     
@@ -233,7 +255,7 @@ void
 tree_binary_insert(BinTree *btree, key_t key) {
 
     /* NA OPERAÇÃO DE INSERÇÃO QUANDO UMA CHAVE JÁ EXISTIR, NÃO É CRIADA NOVA CHAVE */
-    if (IDX_INVALID != tree_binary_search_key_breadth(*btree, key)) {
+    if (IDX_INVALID != tree_binary_search_key_level(*btree, key)) {
         return;
     };
 
@@ -362,13 +384,49 @@ tree_binary_search_key_inorder(BinTree btree, int32_t key) {
 }
 
 idx_t
-tree_binary_search_key_breadth(BinTree btree, int32_t key) {
-    BinTreeNode *root = btree.root;
-    for (idx_t index = 0; index < btree.elements; index++) {
-        if ( root[index].data == key )
-            return index;
+tree_binary_search_key_level(BinTree btree, int32_t key) {
+
+    /* Como não existe ordem inerente nesta àrvore binária, os nós estão
+     * inseridos no array da esquerda para a direita, logo posso percorrer o array.
+     * Vou optimizar porque sim. */
+
+    register BinTreeNode *ptr_front = btree.root;
+    register BinTreeNode *ptr_back = btree.root + btree.elements;
+
+    printf("Search key = %d\n", key);
+
+    register int found = 0;
+    while (ptr_front + 7 < ptr_back) {  
+
+        /* prefetch */
+        __builtin_prefetch(ptr_front + 32, 0, 1);
+        __builtin_prefetch(ptr_back - 32, 0, 1);
+
+        /* Unrolling */
+        found |= (ptr_front->data == key);
+        found |= ((ptr_front + 1)->data == key);
+        found |= ((ptr_front + 2)->data == key);
+        found |= ((ptr_front + 3)->data == key);
+        
+        found |= (ptr_back->data == key);
+        found |= ((ptr_back - 1)->data == key);
+        found |= ((ptr_back - 2)->data == key);
+        found |= ((ptr_back - 3)->data == key);
+
+        ptr_front += 4;
+        ptr_back -= 4;
+
+        if (found) return 0;
     }
-    return IDX_INVALID;
+
+    /* elementos restante */
+    while (ptr_front <= ptr_back) {
+        found |= (ptr_front->data == key) | (ptr_back->data == key);
+        ptr_front++;
+        ptr_back--;
+    }
+
+    return found ? 0 : IDX_INVALID;
 }
 
 double
@@ -379,6 +437,7 @@ tree_binary_test(key_t* arr) {
     clock_t total = 0;
 
     for (int i = 0; i < AVERAGE; i++) {
+        printf("%d\n", i);
         start = clock();
         btree = tree_binary_create(TREESIZE);
         tree_binary_insert_arr(&btree, arr, TREESIZE);
@@ -620,6 +679,7 @@ tree_avl_test(key_t* arr) {
     g_rotation_count = 0;
 
     for (int i = 0; i < AVERAGE; i++) {
+        printf("%d ", i);
         start = clock();
         avl = tree_avl_create(10);
         tree_avl_insert_arr(&avl, arr, TREESIZE);
@@ -635,28 +695,133 @@ tree_avl_test(key_t* arr) {
     return total_time / AVERAGE;
 }
 
+static inline int
+distance(int a, int b) {
+    return (a > b) ? a - b : b - a;
+}
+
+RBTree
+rb_tree_create(uint32_t initial_capacity) {
+    assert(initial_capacity < IDX_INVALID);
+    RBTree tree;
+    tree.nodes = malloc(initial_capacity * sizeof(rb_node_t));
+    assert(tree.nodes != NULL);
+    tree.elements = 0;
+    tree.capacity = initial_capacity;
+    for (uint32_t i = 0; i < tree.capacity; i++) {
+        tree.nodes[i].key = 0;
+        tree.nodes[i].left = IDX_INVALID;
+        tree.nodes[i].right = IDX_INVALID;
+    }
+    return tree;
+}
+
+void
+rb_tree_destroy(RBTree *vp) {
+    free(vp->nodes);
+}
+
+
+void
+rb_tree_resize(RBTree *tree) {
+    assert(tree != NULL);
+
+    /* Capacidade máxima */
+    if (tree->capacity == IDX_INVALID-1) {
+        perror("RB tree cannot resize, already hit maximum capacity.");
+        return;
+    }
+
+    /* Capacidade nova excede capacidade máxima */
+    idx_t new_capacity = tree->capacity*RESIZE_FACTOR;
+    if (new_capacity >= IDX_INVALID) {
+        new_capacity = IDX_INVALID-1;
+        perror("RB tree is at maximum capacity.");
+    }
+
+    rb_node_t *new_nodes = realloc(tree->nodes, new_capacity * sizeof(rb_node_t));
+    if (new_nodes == NULL) {
+        free(tree->nodes);
+        perror("Failed to allocate more nodes.");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Inicializar novos nós */
+    for (uint32_t i = tree->capacity; i < new_capacity; i++) {
+        new_nodes[i].key = 0;
+        new_nodes[i].left = IDX_INVALID;
+        new_nodes[i].right = IDX_INVALID;
+    }
+
+    tree->nodes = new_nodes;
+    tree->capacity = new_capacity;
+}
+
+int
+rb_tree_insert(RBTree *tree, int key) {
+    assert(tree != NULL);
+
+    /* Se a capacidade for excedida */
+    if (tree->elements == tree->capacity)
+        rb_tree_resize(tree);
+    
+    /* se a arvore for vazia, inserimos a raiz */
+    if (tree->elements == 0) {
+        tree->nodes[0].key = key;
+        tree->elements = 1;
+        return 1;
+    }
+    
+}
+
+double
+rb_test(key_t* arr) {
+
+    RBTree vp;
+    clock_t start = 0, end = 0;
+    clock_t total = 0;
+
+    /* Reset global rotation counter */
+    g_rotation_count = 0;
+
+    for (int i = 0; i < AVERAGE; i++) {
+        printf("%d ", i);
+        start = clock();
+        vp = rb_tree_create(10);
+        for (idx_t idx = 0; idx < TREESIZE; idx++)
+            rb_tree_insert(&vp, arr[idx]);
+        end = clock();
+
+        total += (end-start);
+        rb_tree_destroy(&vp);
+    }
+
+    double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
+    return total_time / AVERAGE;
+}
+
+
 int
 main() {
 
     srand(SEED);
     key_t *key_ptr;
 
-    /*key_ptr = arr_gen_conj_a(TREESIZE);*/
-    /*printf("Binary Tree - Conj. A = %0.4lfms\n", tree_binary_test(key_ptr));*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_b(TREESIZE);*/
-    /*printf("Binary Tree - Conj. B = %0.4lfms\n", tree_binary_test(key_ptr));*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_c(TREESIZE);*/
-    /*printf("Binary Tree - Conj. C = %0.4lfms\n", tree_binary_test(key_ptr));*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_d(TREESIZE);*/
-    /*printf("Binary Tree - Conj. D = %0.4lfms\n", tree_binary_test(key_ptr));*/
-    /*free(key_ptr);*/
+    key_ptr = arr_gen_conj_a(TREESIZE);
+    printf("Binary Tree - Conj. A = %0.4lfms\n", tree_binary_test(key_ptr));
+    free(key_ptr);
 
+    key_ptr = arr_gen_conj_b(TREESIZE);
+    printf("Binary Tree - Conj. B = %0.4lfms\n", tree_binary_test(key_ptr));
+    free(key_ptr);
+
+    key_ptr = arr_gen_conj_c(TREESIZE);
+    printf("Binary Tree - Conj. C = %0.4lfms\n", tree_binary_test(key_ptr));
+    free(key_ptr);
+
+    key_ptr = arr_gen_conj_d(TREESIZE);
+    printf("Binary Tree - Conj. D = %0.4lfms\n", tree_binary_test(key_ptr));
+    free(key_ptr);
 
     key_ptr = arr_gen_conj_a(TREESIZE);
     printf("AVL Tree - Conj. A = %0.4lfms\n", tree_avl_test(key_ptr));
@@ -673,6 +838,36 @@ main() {
     key_ptr = arr_gen_conj_d(TREESIZE);
     printf("AVL Tree - Conj. D = %0.4lfms\n", tree_avl_test(key_ptr));
     free(key_ptr);
+
+    /*key_ptr = arr_gen_conj_a(TREESIZE);*/
+    /*printf("RB Tree - Conj. A = %0.4lf ms \n", rb_test(key_ptr) );*/
+    /*free(key_ptr);*/
+    /**/
+    /*key_ptr = arr_gen_conj_b(TREESIZE);*/
+    /*printf("RB Tree - Conj. B = %0.4lf ms \n", rb_test(key_ptr) );*/
+    /*free(key_ptr);*/
+    /**/
+    /*key_ptr = arr_gen_conj_c(TREESIZE);*/
+    /*printf("RB Tree - Conj. C = %0.4lf ms \n", rb_test(key_ptr) );*/
+    /*free(key_ptr);*/
+    /**/
+    /*key_ptr = arr_gen_conj_d(TREESIZE);*/
+    /*printf("RB Tree - Conj. D = %0.4lf ms \n", rb_test(key_ptr) );*/
+    /*free(key_ptr);*/
+
+    /**/
+    /*key_ptr = arr_gen_conj_b(TREESIZE);*/
+    /*printf("AVL Tree - Conj. B = %0.4lfms\n", tree_avl_test(key_ptr));*/
+    /*free(key_ptr);*/
+    /**/
+    /*key_ptr = arr_gen_conj_c(TREESIZE);*/
+    /*printf("AVL Tree - Conj. C = %0.4lfms\n", tree_avl_test(key_ptr));*/
+    /*free(key_ptr);*/
+    /**/
+    /*key_ptr = arr_gen_conj_d(TREESIZE);*/
+    /*printf("AVL Tree - Conj. D = %0.4lfms\n", tree_avl_test(key_ptr));*/
+    /*free(key_ptr);*/
+
 
     return 0;
 }

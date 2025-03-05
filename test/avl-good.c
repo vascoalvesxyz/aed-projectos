@@ -23,7 +23,6 @@ typedef struct AVLNode {
     int height;
 } AVLNode;  // 16 bytes
 
-
 typedef struct AVLTree {
     AVLNode *nodes;
     idx_t tree_root;
@@ -166,7 +165,7 @@ _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
     }
     
     avl->nodes[node_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[node_index].left),
-                                             _tree_avl_get_height(avl, avl->nodes[node_index].right));
+                                            _tree_avl_get_height(avl, avl->nodes[node_index].right));
 
     // Get balance factor to check if rebalancing is needed.
     int balance = _tree_avl_get_balance(avl, node_index);
