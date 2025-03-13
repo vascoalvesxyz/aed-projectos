@@ -166,8 +166,6 @@ _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
     
     avl->nodes[node_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[node_index].left),
                                             _tree_avl_get_height(avl, avl->nodes[node_index].right));
-
-    // Get balance factor to check if rebalancing is needed.
     int balance = _tree_avl_get_balance(avl, node_index);
 
     /* Left Left */
@@ -199,7 +197,6 @@ tree_avl_insert(AVLTree *avl, int key) {
     if (avl->elements == avl->capacity) {
         tree_avl_resize(avl);
     }
-
 
     /* For an empty tree, set the new node as root. */
     if (avl->elements == 0) {

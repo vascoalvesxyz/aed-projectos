@@ -16,13 +16,16 @@
 #define IDX_INVALID 4294967295
 #define SEED 95911405
 
+#define BLACK 0
+#define RED 1
+
 #define DEBUG
 #ifdef DEBUG
 #define AVERAGE 10
 #define TREESIZE 10000
 #else
 #define AVERAGE 10
-#define TREESIZE 1000000
+#define TREESIZE 100000
 #endif 
 
 typedef uint32_t idx_t;
@@ -47,7 +50,6 @@ typedef struct AVLNode {
     int height;
 } AVLNode;
 
-
 typedef struct AVLTree {
     AVLNode *nodes;
     idx_t tree_root; // rotations cause the root to change
@@ -56,15 +58,17 @@ typedef struct AVLTree {
 } AVLTree; // 20 bytes
 
 typedef struct RBNode {
-    idx_t left;       
-    idx_t right;      
-    key_t key;             
-} rb_node_t;
+    idx_t left;     // 4 bytes
+    idx_t right;    // 4 bytes
+    key_t key;      // 4 bytes
+    int8_t color;   // 1 bytes
+} RBNode;
 
 typedef struct RBTree {
-    rb_node_t *nodes;
-    uint32_t elements;
-    uint32_t capacity;
+    RBNode *nodes;
+    idx_t tree_root;
+    idx_t elements;
+    idx_t capacity;
 } RBTree;
 
 /* === HELPER FUNCTIONS === */
@@ -103,12 +107,17 @@ extern AVLNode* tree_avl_search(AVLTree *avl, int key);
 extern void     tree_avl_in_order(AVLTree *avl); // in-order print
 
 /* ===== RED BLACK TREE ===== */
-static inline int distance(int a, int b);
-extern RBTree   rb_tree_create(uint32_t initial_capacity);
-extern void     rb_tree_destroy(RBTree *vp);
-extern void     rb_tree_resize(RBTree *tree);
-extern int      rb_tree_insert(RBTree *tree, int key);
-extern key_t    rb_tree_search(RBTree *tree, int key);
+extern RBTree  tree_rb_create(uint32_t initial_capacity);
+extern void    tree_rb_destroy(RBTree *rb);
+extern void    tree_rb_resize(RBTree *rb);
+static int     _rb_is_red(RBTree *tree, idx_t i);
+static idx_t   _rb_rotate_left(RBTree *tree, idx_t h);
+static idx_t   _rb_rotate_right(RBTree *tree, idx_t h);
+static void    _rb_flip_colors(RBTree *tree, idx_t h);
+static idx_t   _rb_fix_up(RBTree *tree, idx_t h);
+static idx_t   _rb_insert_recursive(RBTree *tree, idx_t h, key_t key);
+extern void    tree_rb_insert(RBTree *tree, key_t key);
+extern int     tree_rb_search(RBTree *rb, int key);
 
 /* ==== FUNCTION DECLATRATIONS ==== */
 static inline int 
@@ -393,7 +402,7 @@ tree_binary_search_key_level(BinTree btree, int32_t key) {
     register BinTreeNode *ptr_front = btree.root;
     register BinTreeNode *ptr_back = btree.root + btree.elements;
 
-    printf("Search key = %d\n", key);
+    /*printf("Search key = %d\n", key);*/
 
     register int found = 0;
     while (ptr_front + 7 < ptr_back) {  
@@ -437,7 +446,6 @@ tree_binary_test(key_t* arr) {
     clock_t total = 0;
 
     for (int i = 0; i < AVERAGE; i++) {
-        printf("%d\n", i);
         start = clock();
         btree = tree_binary_create(TREESIZE);
         tree_binary_insert_arr(&btree, arr, TREESIZE);
@@ -508,37 +516,37 @@ _tree_avl_get_balance(AVLTree* avl, idx_t index) {
 static uint32_t g_rotation_count = 0;
 
 static idx_t
-_tree_avl_rotate_right(AVLTree *avl, idx_t y_index) {
+_tree_avl_rotate_right(AVLTree *avl, idx_t node_idx) {
     g_rotation_count++;
 
-    idx_t x_index = avl->nodes[y_index].left;
-    idx_t T2 = avl->nodes[x_index].right;
+    idx_t pivot = avl->nodes[node_idx].left;
+    idx_t T2 = avl->nodes[pivot].right;
 
     // Perform rotation:
-    avl->nodes[x_index].right = y_index;
-    avl->nodes[y_index].left = T2;
+    avl->nodes[pivot].right = node_idx;
+    avl->nodes[node_idx].left = T2;
 
     // Update heights:
-    avl->nodes[y_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[y_index].left), _tree_avl_get_height(avl, avl->nodes[y_index].right));
-    avl->nodes[x_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[x_index].left), _tree_avl_get_height(avl, avl->nodes[x_index].right));
-    return x_index;
+    avl->nodes[node_idx].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[node_idx].left), _tree_avl_get_height(avl, avl->nodes[node_idx].right));
+    avl->nodes[pivot].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[pivot].left), _tree_avl_get_height(avl, avl->nodes[pivot].right));
+    return pivot;
 }
 
 static idx_t
 _tree_avl_rotate_left(AVLTree *avl, idx_t x_index) {
     g_rotation_count++;
 
-    idx_t y_index = avl->nodes[x_index].right;
-    idx_t T2 = avl->nodes[y_index].left;
+    idx_t pivot = avl->nodes[x_index].right;
+    idx_t T2 = avl->nodes[pivot].left;
 
     // Perform rotation:
-    avl->nodes[y_index].left = x_index;
+    avl->nodes[pivot].left = x_index;
     avl->nodes[x_index].right = T2;
 
     // Update heights:
     avl->nodes[x_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[x_index].left), _tree_avl_get_height(avl, avl->nodes[x_index].right));
-    avl->nodes[y_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[y_index].left), _tree_avl_get_height(avl, avl->nodes[y_index].right));
-    return y_index;
+    avl->nodes[pivot].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[pivot].left), _tree_avl_get_height(avl, avl->nodes[pivot].right));
+    return pivot;
 }
 
 static idx_t
@@ -679,7 +687,6 @@ tree_avl_test(key_t* arr) {
     g_rotation_count = 0;
 
     for (int i = 0; i < AVERAGE; i++) {
-        printf("%d ", i);
         start = clock();
         avl = tree_avl_create(10);
         tree_avl_insert_arr(&avl, arr, TREESIZE);
@@ -695,84 +702,185 @@ tree_avl_test(key_t* arr) {
     return total_time / AVERAGE;
 }
 
-static inline int
-distance(int a, int b) {
-    return (a > b) ? a - b : b - a;
-}
-
+/* Red Black Tree Implementation */
+/* Criar arvore */
 RBTree
-rb_tree_create(uint32_t initial_capacity) {
-    assert(initial_capacity < IDX_INVALID);
+tree_rb_create(uint32_t initial_capacity) {
     RBTree tree;
-    tree.nodes = malloc(initial_capacity * sizeof(rb_node_t));
+    tree.nodes = malloc(initial_capacity * sizeof(RBNode));
     assert(tree.nodes != NULL);
+
     tree.elements = 0;
     tree.capacity = initial_capacity;
-    for (uint32_t i = 0; i < tree.capacity; i++) {
-        tree.nodes[i].key = 0;
-        tree.nodes[i].left = IDX_INVALID;
-        tree.nodes[i].right = IDX_INVALID;
+
+    // a raiz da arvore é invalida inicialmente
+    // para que seja pintada correctamente de preto (caso especial)
+    // e inserida imediatamente
+    tree.tree_root = IDX_INVALID;
+
+    RBNode *endptr = tree.nodes+tree.capacity;
+    for (RBNode *ptr = tree.nodes; ptr != endptr; ptr++) {
+        ptr->key = 0;
+        ptr->color = -1;
+        ptr->left = IDX_INVALID;
+        ptr->right = IDX_INVALID;
     }
     return tree;
 }
 
+/* Destruir árvore */
 void
-rb_tree_destroy(RBTree *vp) {
-    free(vp->nodes);
+tree_rb_destroy(RBTree *rb) {
+    free(rb->nodes);
 }
 
-
+/* Aumentar capacidade */
 void
-rb_tree_resize(RBTree *tree) {
+tree_rb_resize(RBTree *tree) {
     assert(tree != NULL);
-
-    /* Capacidade máxima */
-    if (tree->capacity == IDX_INVALID-1) {
-        perror("RB tree cannot resize, already hit maximum capacity.");
-        return;
-    }
-
-    /* Capacidade nova excede capacidade máxima */
-    idx_t new_capacity = tree->capacity*RESIZE_FACTOR;
-    if (new_capacity >= IDX_INVALID) {
-        new_capacity = IDX_INVALID-1;
-        perror("RB tree is at maximum capacity.");
-    }
-
-    rb_node_t *new_nodes = realloc(tree->nodes, new_capacity * sizeof(rb_node_t));
+    uint32_t new_capacity = tree->capacity * RESIZE_FACTOR;
+    
+    RBNode *new_nodes = realloc(tree->nodes, new_capacity * sizeof(RBNode));
     if (new_nodes == NULL) {
         free(tree->nodes);
         perror("Failed to allocate more nodes.");
         exit(EXIT_FAILURE);
     }
-
-    /* Inicializar novos nós */
-    for (uint32_t i = tree->capacity; i < new_capacity; i++) {
-        new_nodes[i].key = 0;
-        new_nodes[i].left = IDX_INVALID;
-        new_nodes[i].right = IDX_INVALID;
+    
+    // inicializar novos nós
+    RBNode *endptr = new_nodes + new_capacity;
+    for (RBNode *ptr = new_nodes + tree->capacity; ptr != endptr; ptr++) {
+        ptr->key = 0;
+        ptr->color = -1;
+        ptr->left = IDX_INVALID;
+        ptr->right = IDX_INVALID;
     }
-
+    
     tree->nodes = new_nodes;
     tree->capacity = new_capacity;
 }
 
-int
-rb_tree_insert(RBTree *tree, int key) {
-    assert(tree != NULL);
 
-    /* Se a capacidade for excedida */
-    if (tree->elements == tree->capacity)
-        rb_tree_resize(tree);
-    
-    /* se a arvore for vazia, inserimos a raiz */
-    if (tree->elements == 0) {
-        tree->nodes[0].key = key;
-        tree->elements = 1;
-        return 1;
+/* 1 (verdadeiro) se o nó for vermelho */
+static int
+_rb_is_red(RBTree *tree, idx_t i) {
+    // a raiz da arvore é invalida inicialmente
+    // isto significa que vai ser pintada correctamente de preto
+    if (i == IDX_INVALID) return 0; 
+    return (tree->nodes[i].color == RED);
+}
+
+/* rotação à esquerda */
+static idx_t
+_rb_rotate_left(RBTree *tree, idx_t h) {
+    g_rotation_count++;
+    idx_t pivot = tree->nodes[h].right;
+    tree->nodes[h].right = tree->nodes[pivot].left;
+    tree->nodes[pivot].left = h;
+    tree->nodes[pivot].color = tree->nodes[h].color;
+    tree->nodes[h].color = RED;
+    return pivot;
+}
+
+/* rotação à direita */
+static idx_t
+_rb_rotate_right(RBTree *tree, idx_t h) {
+    g_rotation_count++;
+    idx_t pivot = tree->nodes[h].left;
+    tree->nodes[h].left = tree->nodes[pivot].right;
+    tree->nodes[pivot].right = h;
+    tree->nodes[pivot].color = tree->nodes[h].color;
+    tree->nodes[h].color = RED;
+    return pivot;
+}
+
+/* Inverter cores */
+static void
+_rb_flip_colors(RBTree *tree, idx_t h) {
+    tree->nodes[h].color = !tree->nodes[h].color;
+    idx_t left = tree->nodes[h].left;
+    idx_t right = tree->nodes[h].right;
+    if (left != IDX_INVALID)
+        tree->nodes[left].color = !tree->nodes[left].color;
+    if (right != IDX_INVALID)
+        tree->nodes[right].color = !tree->nodes[right].color;
+}
+
+/* Resolve comflictos */
+static idx_t
+_rb_fix_up(RBTree *tree, idx_t h) {
+    /* Caso 1: direita vermelha e esquerda preta -> rotação à esquerda */
+    if (_rb_is_red(tree, tree->nodes[h].right) && !_rb_is_red(tree, tree->nodes[h].left))
+        h = _rb_rotate_left(tree, h);
+    /* Caso 2: filho esquerdo vermelho e neto esquerdo vermelho -> rotação à direita */
+    if (_rb_is_red(tree, tree->nodes[h].left) && _rb_is_red(tree, tree->nodes[tree->nodes[h].left].left))
+        h = _rb_rotate_right(tree, h);
+    /* Caso 3: ambos os filhos são vermelhos */
+    if (_rb_is_red(tree, tree->nodes[h].left) && _rb_is_red(tree, tree->nodes[h].right))
+        _rb_flip_colors(tree, h);
+    return h;
+}
+
+/* Inserção recursiva: Devolve o novo indice da raiz se inserir */
+static idx_t
+_rb_insert_recursive(RBTree *tree, idx_t h, key_t key) {
+
+    /* Inserir após encontrar nova folha 
+     * (chamada anterior para filho que não existe) */
+    if (h == IDX_INVALID) {
+        idx_t new_index = tree->elements;
+        tree->nodes[new_index].key = key;
+        tree->nodes[new_index].left = IDX_INVALID;
+        tree->nodes[new_index].right = IDX_INVALID;
+        tree->nodes[new_index].color = RED;  // sempre vermelho
+        tree->elements++;
+        return new_index;
     }
     
+    /* Recursão equivalente a binary search tree */
+    if (key < tree->nodes[h].key) {
+        tree->nodes[h].left = _rb_insert_recursive(tree, tree->nodes[h].left, key);
+    } else if (key > tree->nodes[h].key) {
+        tree->nodes[h].right = _rb_insert_recursive(tree, tree->nodes[h].right, key);
+    }
+
+    /* É necessário corrigir erros causados pela inserção */
+    h = _rb_fix_up(tree, h);
+    return h;
 }
+
+/* Inserir nó */
+void
+tree_rb_insert(RBTree *tree, key_t key) {
+
+    /* Aumentar capacidade  se for necessário */
+    if (tree->capacity == tree->elements)
+        tree_rb_resize(tree);
+
+    tree->tree_root = _rb_insert_recursive(tree, tree->tree_root, key);
+    tree->nodes[tree->tree_root].color = BLACK;
+}
+
+/* Pesquisa */
+int
+tree_rb_search(RBTree *tree, int key) {
+    RBNode *nodes = tree->nodes;
+    idx_t current = tree->tree_root;
+
+    /* binary search tree search */
+    while (current != IDX_INVALID) {
+        printf("current = %d\n", current);
+        if (key < nodes[current].key)
+            current = nodes[current].left;
+        else if (key > nodes[current].key)
+            current = nodes[current].right;
+        else
+            return current;
+    }
+
+    return -1;
+}
+
 
 double
 rb_test(key_t* arr) {
@@ -784,22 +892,21 @@ rb_test(key_t* arr) {
     /* Reset global rotation counter */
     g_rotation_count = 0;
 
-    for (int i = 0; i < AVERAGE; i++) {
-        printf("%d ", i);
-        start = clock();
-        vp = rb_tree_create(10);
+    for (int i = 0; i < AVERAGE; i++) { start = clock();
+        vp = tree_rb_create(TREESIZE);
         for (idx_t idx = 0; idx < TREESIZE; idx++)
-            rb_tree_insert(&vp, arr[idx]);
+            tree_rb_insert(&vp, arr[idx]);
         end = clock();
 
         total += (end-start);
-        rb_tree_destroy(&vp);
+        tree_rb_destroy(&vp);
     }
+
+    printf("=> Average Number of Rotations: %d\n", g_rotation_count/AVERAGE);
 
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
     return total_time / AVERAGE;
 }
-
 
 int
 main() {
@@ -823,6 +930,7 @@ main() {
     printf("Binary Tree - Conj. D = %0.4lfms\n", tree_binary_test(key_ptr));
     free(key_ptr);
 
+        /* Test AVL */
     key_ptr = arr_gen_conj_a(TREESIZE);
     printf("AVL Tree - Conj. A = %0.4lfms\n", tree_avl_test(key_ptr));
     free(key_ptr);
@@ -839,34 +947,22 @@ main() {
     printf("AVL Tree - Conj. D = %0.4lfms\n", tree_avl_test(key_ptr));
     free(key_ptr);
 
-    /*key_ptr = arr_gen_conj_a(TREESIZE);*/
-    /*printf("RB Tree - Conj. A = %0.4lf ms \n", rb_test(key_ptr) );*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_b(TREESIZE);*/
-    /*printf("RB Tree - Conj. B = %0.4lf ms \n", rb_test(key_ptr) );*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_c(TREESIZE);*/
-    /*printf("RB Tree - Conj. C = %0.4lf ms \n", rb_test(key_ptr) );*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_d(TREESIZE);*/
-    /*printf("RB Tree - Conj. D = %0.4lf ms \n", rb_test(key_ptr) );*/
-    /*free(key_ptr);*/
+    /* Test Red Black */
+    key_ptr = arr_gen_conj_a(TREESIZE);
+    printf("RB Tree - Conj. A = %0.4lf ms \n", rb_test(key_ptr) );
+    free(key_ptr);
 
-    /**/
-    /*key_ptr = arr_gen_conj_b(TREESIZE);*/
-    /*printf("AVL Tree - Conj. B = %0.4lfms\n", tree_avl_test(key_ptr));*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_c(TREESIZE);*/
-    /*printf("AVL Tree - Conj. C = %0.4lfms\n", tree_avl_test(key_ptr));*/
-    /*free(key_ptr);*/
-    /**/
-    /*key_ptr = arr_gen_conj_d(TREESIZE);*/
-    /*printf("AVL Tree - Conj. D = %0.4lfms\n", tree_avl_test(key_ptr));*/
-    /*free(key_ptr);*/
+    key_ptr = arr_gen_conj_b(TREESIZE);
+    printf("RB Tree - Conj. B = %0.4lf ms \n", rb_test(key_ptr) );
+    free(key_ptr);
+
+    key_ptr = arr_gen_conj_c(TREESIZE);
+    printf("RB Tree - Conj. C = %0.4lf ms \n", rb_test(key_ptr) );
+    free(key_ptr);
+
+    key_ptr = arr_gen_conj_d(TREESIZE);
+    printf("RB Tree - Conj. D = %0.4lf ms \n", rb_test(key_ptr) );
+    free(key_ptr);
 
 
     return 0;

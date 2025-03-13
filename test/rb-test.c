@@ -29,84 +29,36 @@ typedef struct RBNode {
 
 typedef struct RBTree {
     RBNode *nodes;
-    RBNode *tree_root;
+    idx_t tree_root;
     idx_t elements;
     idx_t capacity;
 } RBTree;
 
-RBTree  tree_rb_create(uint32_t initial_capacity);
-void    tree_rb_destroy(RBTree *rb);
-void    tree_rb_resize(RBTree *rb);
-int     tree_rb_insert(RBTree *rb, int key);
-int     tree_rb_search(RBTree *rb, int key);
+extern RBTree  tree_rb_create(uint32_t initial_capacity);
+extern void    tree_rb_destroy(RBTree *rb);
+extern void    tree_rb_resize(RBTree *rb);
+static int     _rb_is_red(RBTree *tree, idx_t i);
+static idx_t   _rb_rotate_left(RBTree *tree, idx_t h);
+static idx_t   _rb_rotate_right(RBTree *tree, idx_t h);
+static void    _rb_flip_colors(RBTree *tree, idx_t h);
+static idx_t   _rb_fix_up(RBTree *tree, idx_t h);
+static idx_t   _rb_insert_recursive(RBTree *tree, idx_t h, key_t key);
+extern void    tree_rb_insert(RBTree *tree, key_t key);
+extern int     tree_rb_search(RBTree *rb, int key);
 
-void rb_rotate(RBTree *rb, RBNode *subtree, int dir) {
-    assert(dir == LEFT || dir == RIGHT); // duh
-    
-    idx_t subtree_index = subtree - rb->nodes;
-    RBNode* pivot;
-
-    idx_t pivot_index = (dir==LEFT) ? subtree->right : subtree->left;
-    pivot_index = subtree->right;
-
-    if (pivot_index == IDX_INVALID) {
-        perror("RBTree: Invalid Rotationn");
-        return;
-    }
-
-    /* Left Rotation */
-    if (dir == LEFT) {
-
-        pivot = &rb->nodes[pivot_index];
-        subtree->right = pivot->left;
-
-        if (pivot->left != IDX_INVALID) {
-            rb->nodes[pivot->left].parent = subtree_index;
-        }
-
-        pivot->left = subtree_index;
-    } 
-    /* Right Rotation*/
-    else { /* é sempre 1 ou 0 por causa do assert */
-
-        pivot_index = subtree->left;
-        pivot = &rb->nodes[pivot_index];
-
-        subtree->left = pivot->right;
-        if (pivot->right != IDX_INVALID) {
-            rb->nodes[pivot->right].parent = subtree_index;
-        }
-
-        pivot->right = subtree_index;
-    } 
-
-    /* Update parent pointers. */
-    idx_t parent_index = subtree->parent;
-    pivot->parent = parent_index;
-    subtree->parent = pivot_index;
-
-    /* New root */
-    if (parent_index == IDX_INVALID) {
-        rb->tree_root = pivot;
-    } else {
-        RBNode* parent = &rb->nodes[parent_index];
-        if (parent->left == subtree_index) {
-            parent->left = pivot_index;
-        } else {
-            parent->right = pivot_index;
-        }
-    }
-}
-
-RBTree
-tree_rb_create(uint32_t initial_capacity) {
+/* Criar arvore */
+RBTree tree_rb_create(uint32_t initial_capacity) {
     RBTree tree;
     tree.nodes = malloc(initial_capacity * sizeof(RBNode));
     assert(tree.nodes != NULL);
 
     tree.elements = 0;
     tree.capacity = initial_capacity;
-    tree.tree_root = NULL;
+
+    // a raiz da arvore é invalida inicialmente
+    // para que seja pintada correctamente de preto (caso especial)
+    // e inserida imediatamente
+    tree.tree_root = IDX_INVALID;
 
     RBNode *endptr = tree.nodes+tree.capacity;
     for (RBNode *ptr = tree.nodes; ptr != endptr; ptr++) {
@@ -118,13 +70,13 @@ tree_rb_create(uint32_t initial_capacity) {
     return tree;
 }
 
-void
-tree_rb_destroy(RBTree *rb) {
+/* Destruir árvore */
+void tree_rb_destroy(RBTree *rb) {
     free(rb->nodes);
 }
 
-void
-tree_rb_resize(RBTree *tree) {
+/* Aumentar capacidade */
+void tree_rb_resize(RBTree *tree) {
     assert(tree != NULL);
     uint32_t new_capacity = tree->capacity * RESIZE_FACTOR;
     
@@ -135,7 +87,7 @@ tree_rb_resize(RBTree *tree) {
         exit(EXIT_FAILURE);
     }
     
-    // Initialize the new portion of the array using new_nodes.
+    // inicializar novos nós
     RBNode *endptr = new_nodes + new_capacity;
     for (RBNode *ptr = new_nodes + tree->capacity; ptr != endptr; ptr++) {
         ptr->key = 0;
@@ -144,75 +96,123 @@ tree_rb_resize(RBTree *tree) {
         ptr->right = IDX_INVALID;
     }
     
-    if ( tree->tree_root == tree->nodes ) 
-        tree->tree_root == new_nodes;
-
     tree->nodes = new_nodes;
     tree->capacity = new_capacity;
 }
 
-int
-tree_rb_insert(RBTree *tree, int key) {
-    assert(tree != NULL);
 
-    /* alocar memoria se for preciso */
-    if (tree->elements == tree->capacity)
+/* 1 (verdadeiro) se o nó for vermelho */
+static int _rb_is_red(RBTree *tree, idx_t i) {
+    // a raiz da arvore é invalida inicialmente
+    // isto significa que vai ser pintada correctamente de preto
+    if (i == IDX_INVALID) return 0; 
+    return (tree->nodes[i].color == RED);
+}
+
+/* rotação à esquerda */
+static idx_t _rb_rotate_left(RBTree *tree, idx_t h) {
+    idx_t pivot = tree->nodes[h].right;
+    tree->nodes[h].right = tree->nodes[pivot].left;
+    tree->nodes[pivot].left = h;
+    tree->nodes[pivot].color = tree->nodes[h].color;
+    tree->nodes[h].color = RED;
+    return pivot;
+}
+
+/* rotação à direita */
+static idx_t _rb_rotate_right(RBTree *tree, idx_t h) {
+    idx_t pivot = tree->nodes[h].left;
+    tree->nodes[h].left = tree->nodes[pivot].right;
+    tree->nodes[pivot].right = h;
+    tree->nodes[pivot].color = tree->nodes[h].color;
+    tree->nodes[h].color = RED;
+    return pivot;
+}
+
+/* Inverter cores */
+static void _rb_flip_colors(RBTree *tree, idx_t h) {
+    tree->nodes[h].color = !tree->nodes[h].color;
+    idx_t left = tree->nodes[h].left;
+    idx_t right = tree->nodes[h].right;
+    if (left != IDX_INVALID)
+        tree->nodes[left].color = !tree->nodes[left].color;
+    if (right != IDX_INVALID)
+        tree->nodes[right].color = !tree->nodes[right].color;
+}
+
+/* Resolve comflictos */
+static idx_t _rb_fix_up(RBTree *tree, idx_t h) {
+    /* Caso 1: direita vermelha e esquerda preta -> rotação à esquerda */
+    if (_rb_is_red(tree, tree->nodes[h].right) && !_rb_is_red(tree, tree->nodes[h].left))
+        h = _rb_rotate_left(tree, h);
+    /* Caso 2: filho esquerdo vermelho e neto esquerdo vermelho -> rotação à direita */
+    if (_rb_is_red(tree, tree->nodes[h].left) && _rb_is_red(tree, tree->nodes[tree->nodes[h].left].left))
+        h = _rb_rotate_right(tree, h);
+    /* Caso 3: ambos os filhos são vermelhos */
+    if (_rb_is_red(tree, tree->nodes[h].left) && _rb_is_red(tree, tree->nodes[h].right))
+        _rb_flip_colors(tree, h);
+    return h;
+}
+
+/* Inserção recursiva: Devolve o novo indice da raiz se inserir */
+static idx_t _rb_insert_recursive(RBTree *tree, idx_t h, key_t key) {
+
+    /* Inserir após encontrar nova folha 
+     * (chamada anterior para filho que não existe) */
+    if (h == IDX_INVALID) {
+        idx_t new_index = tree->elements;
+        tree->nodes[new_index].key = key;
+        tree->nodes[new_index].left = IDX_INVALID;
+        tree->nodes[new_index].right = IDX_INVALID;
+        tree->nodes[new_index].color = RED;  // sempre vermelho
+        tree->elements++;
+        return new_index;
+    }
+    
+    /* Recursão equivalente a binary search tree */
+    if (key < tree->nodes[h].key) {
+        tree->nodes[h].left = _rb_insert_recursive(tree, tree->nodes[h].left, key);
+    } else if (key > tree->nodes[h].key) {
+        tree->nodes[h].right = _rb_insert_recursive(tree, tree->nodes[h].right, key);
+    }
+
+    /* É necessário corrigir erros causados pela inserção */
+    h = _rb_fix_up(tree, h);
+    return h;
+}
+
+/* Inserir nó */
+void tree_rb_insert(RBTree *tree, key_t key) {
+
+    /* Aumentar capacidade  se for necessário */
+    if (tree->capacity == tree->elements)
         tree_rb_resize(tree);
-    printf("tree->capacity = %d\n", tree->capacity);
-    printf("tree->elemens = %d\n", tree->elements);
 
+    tree->tree_root = _rb_insert_recursive(tree, tree->tree_root, key);
+    tree->nodes[tree->tree_root].color = BLACK;
+}
+
+/* Pesquisa */
+int tree_rb_search(RBTree *tree, int key) {
     RBNode *nodes = tree->nodes;
-    RBNode this_node;
-    idx_t current = (tree->tree_root != NULL) ? (tree->tree_root - nodes) : IDX_INVALID;
-    idx_t parent = IDX_INVALID;
+    idx_t current = tree->tree_root;
 
-    /* binary search tree insert */
+    /* binary search tree search */
     while (current != IDX_INVALID) {
-        parent = current;
         printf("current = %d\n", current);
         if (key < nodes[current].key)
             current = nodes[current].left;
         else if (key > nodes[current].key)
             current = nodes[current].right;
         else
-            return 1;  // duplicate key, do not insert
+            return current;
     }
 
-    /* inserir novo nó */
-    RBNode *new_node = &nodes[tree->elements];
-    printf("new_node idx = %d\n", new_node-nodes);
-    tree->elements++;
-    new_node->key = key;
-    new_node->color = RED;
-    new_node->left = IDX_INVALID;
-    new_node->right = IDX_INVALID;
-    new_node->parent = parent;
-
-    /* Pais e filhos */
-    if (parent == IDX_INVALID) {
-        /*tree->tree_root = new_node;*/
-        new_node->color = BLACK; // caso especial
-    } else if (new_node->key < nodes[parent].key) {
-        (nodes+parent)->left = nodes-new_node; // idx
-    } else {
-        (nodes+parent)->right = nodes-new_node; // idx
-    }
-
-    /* Os primeiros dois nós não precisam de fix x*/
-    if (parent!=IDX_INVALID && nodes[new_node->parent].parent == IDX_INVALID) {
-        return 0;
-    }
-
-    /*fixInsert(new_node);*/
-    return 0;
-}
-
-int tree_rb_search(RBTree *tree, int key) {
-    assert(tree != NULL);
     return -1;
 }
 
-int main(void) {
+int
+main(void) {
 
     RBTree tree = tree_rb_create(TREESIZE);
 
@@ -220,25 +220,22 @@ int main(void) {
     size_t num_keys = sizeof(keys) / sizeof(keys[0]);
 
     for (size_t i = 0; i < num_keys; i++) {
-        if (0==tree_rb_insert(&tree, keys[i])) {
-            printf("Inserted key %d\n", keys[i]);
-        } else {
-            printf("Key %d is a duplicate and was not inserted.\n", keys[i]);
-        }
+        tree_rb_insert(&tree, keys[i]);
+        printf("Inserted key %d\n", keys[i]);
     }
 
     printf("RB-tree built with %u nodes.\n", tree.elements);
 
-    /* Search for some keys */
-    /*int search_keys[] = {11, 5, 100};*/
-    /*size_t num_search = sizeof(search_keys) / sizeof(search_keys[0]);*/
-    /*for (size_t i = 0; i < num_search; i++) {*/
-    /*    int idx = tree_rb_search(&tree, search_keys[i]);*/
-    /*    if (idx != -1)*/
-    /*        printf("Found key %d at node index %d\n", search_keys[i], idx);*/
-    /*    else*/
-    /*        printf("Key %d not found in the tree.\n", search_keys[i]);*/
-    /*}*/
+     /*Search for some keys */
+    int search_keys[] = {11, 5, 100};
+    size_t num_search = sizeof(search_keys) / sizeof(search_keys[0]);
+    for (size_t i = 0; i < num_search; i++) {
+        int idx = tree_rb_search(&tree, search_keys[i]);
+        if (idx != -1)
+            printf("Found key %d at node index %d\n", search_keys[i], idx);
+        else
+            printf("Key %d not found in the tree.\n", search_keys[i]);
+    }
 
     tree_rb_destroy(&tree);
     return 0;
