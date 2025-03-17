@@ -1,6 +1,8 @@
 /* Código feito para C99, compilado com GCC 14.2.1 com flags --std=c99 -O2 e --fast-math
- * Hardware Original: SATELLITE_C50-A PSCG6P-01YAR1, 
- * CPU: Intel i5-3320M (4) @ 3.300GHz, GPU: Intel 3rd Gen Core processor Graphics Controller
+ *
+ * Hardware Original: TOSHIBA SATELLITE_C50-A PSCG6P-01YAR1, 
+ * CPU: Intel i5-3320M (4) @ 3.300GHz,
+ * GPU: Intel 3rd Gen Core processor Graphics Controller
  * RAM: 7821MiB, SSD SATA3 1TB
  * 
  * Aluno: Vasco Alves, 2022228207
@@ -24,8 +26,8 @@
 #define AVERAGE 10
 #define TREESIZE 10000
 #else
-#define AVERAGE 10
-#define TREESIZE 100000
+#define AVERAGE 5
+#define TREESIZE 1000000
 #endif 
 
 typedef uint32_t idx_t;
@@ -71,6 +73,20 @@ typedef struct RBTree {
     idx_t capacity;
 } RBTree;
 
+typedef struct TreapNode {
+    key_t key;
+    idx_t priority;
+    idx_t left;
+    idx_t right;
+} TreapNode;
+
+typedef struct Treap {
+    TreapNode* nodes;
+    idx_t tree_root;
+    idx_t elements;
+    idx_t capacity;
+} Treap;
+
 /* === HELPER FUNCTIONS === */
 static inline int randint(int a, int b);
 static inline int max(int a, int b);
@@ -90,17 +106,17 @@ extern void     tree_binary_print_inorder(BinTree *btree); // in order print acc
 extern void     tree_binary_print(BinTree *btree);  // print by levels for visual accuracy
 extern idx_t    tree_binary_search_key_inorder(BinTree btree, int32_t key); // search for key in binary tree by order
 extern idx_t    tree_binary_search_key_level(BinTree btree, int32_t key); // faster than inorder because of this structure
-extern double   tree_binary_test(key_t* arr);
+extern void     binary_test_and_log(key_t* arr, FILE *fptr);
 
 /* ===== AVL TREE ===== */
 extern AVLTree tree_avl_create(idx_t inicial_capacity);
 extern void    tree_avl_destroy(AVLTree* avl);
 extern void    tree_avl_resize(AVLTree *avl);
-static int      _tree_avl_get_height(AVLTree* avl, idx_t index);
-static int      _tree_avl_get_balance(AVLTree* avl, idx_t index);
-static idx_t    _tree_avl_rotate_right(AVLTree *avl, idx_t y_index);
-static idx_t    _tree_avl_rotate_left(AVLTree *avl, idx_t x_index);
-static idx_t    _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key);
+static int      _avl_get_height(AVLTree* avl, idx_t index);
+static int      _avl_get_balance(AVLTree* avl, idx_t index);
+static idx_t    _avl_rotate_right(AVLTree *avl, idx_t y_index);
+static idx_t    _avl_rotate_left(AVLTree *avl, idx_t x_index);
+static idx_t    _avl_insert_recursive(AVLTree *avl, idx_t node_index, int key);
 extern void     tree_avl_insert(AVLTree *avl, int key);
 extern void     tree_avl_insert_arr(AVLTree *avl, key_t* arr, size_t size);
 extern AVLNode* tree_avl_search(AVLTree *avl, int key);
@@ -118,6 +134,15 @@ static idx_t   _rb_fix_up(RBTree *tree, idx_t h);
 static idx_t   _rb_insert_recursive(RBTree *tree, idx_t h, key_t key);
 extern void    tree_rb_insert(RBTree *tree, key_t key);
 extern int     tree_rb_search(RBTree *rb, int key);
+
+/* ===== TREAP ===== */ 
+extern Treap tree_treap_create(int inicial_capacity);
+extern void  tree_treap_resize(Treap *treap);
+extern void  tree_treap_destroy(Treap *treap);
+static idx_t _treap_rotate_right(Treap *treap, idx_t x_idx);
+static idx_t _treap_rotate_left(Treap *treap, idx_t x_idx);
+static idx_t _treap_insert_recursive(Treap *treap, idx_t idx, key_t key);
+extern void  tree_treap_insert(Treap *treap, key_t key);
 
 /* ==== FUNCTION DECLATRATIONS ==== */
 static inline int 
@@ -438,8 +463,8 @@ tree_binary_search_key_level(BinTree btree, int32_t key) {
     return found ? 0 : IDX_INVALID;
 }
 
-double
-tree_binary_test(key_t* arr) {
+void
+binary_test_and_log(key_t* arr, FILE *fptr) {
 
     BinTree btree;
     clock_t start = 0, end = 0;
@@ -454,8 +479,9 @@ tree_binary_test(key_t* arr) {
         total += (end-start);
         tree_binary_destroy(btree);
     }
+
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    return total_time / AVERAGE;
+    fprintf(fptr, "Binary Tree = %0.4lfms\t(0 rotations)\n", total_time/AVERAGE);
 }
 
 AVLTree
@@ -503,20 +529,20 @@ tree_avl_resize(AVLTree *avl) {
 
 
 static int
-_tree_avl_get_height(AVLTree* avl, idx_t index) {
+_avl_get_height(AVLTree* avl, idx_t index) {
     return (index == IDX_INVALID) ? 0 : avl->nodes[index].height;
 }
 
 static int
-_tree_avl_get_balance(AVLTree* avl, idx_t index) {
+_avl_get_balance(AVLTree* avl, idx_t index) {
     if (index == IDX_INVALID) return 0;
-    return _tree_avl_get_height(avl, avl->nodes[index].left) - _tree_avl_get_height(avl, avl->nodes[index].right);
+    return _avl_get_height(avl, avl->nodes[index].left) - _avl_get_height(avl, avl->nodes[index].right);
 }
 
 static uint32_t g_rotation_count = 0;
 
 static idx_t
-_tree_avl_rotate_right(AVLTree *avl, idx_t node_idx) {
+_avl_rotate_right(AVLTree *avl, idx_t node_idx) {
     g_rotation_count++;
 
     idx_t pivot = avl->nodes[node_idx].left;
@@ -527,13 +553,13 @@ _tree_avl_rotate_right(AVLTree *avl, idx_t node_idx) {
     avl->nodes[node_idx].left = T2;
 
     // Update heights:
-    avl->nodes[node_idx].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[node_idx].left), _tree_avl_get_height(avl, avl->nodes[node_idx].right));
-    avl->nodes[pivot].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[pivot].left), _tree_avl_get_height(avl, avl->nodes[pivot].right));
+    avl->nodes[node_idx].height = 1 + max(_avl_get_height(avl, avl->nodes[node_idx].left), _avl_get_height(avl, avl->nodes[node_idx].right));
+    avl->nodes[pivot].height = 1 + max(_avl_get_height(avl, avl->nodes[pivot].left), _avl_get_height(avl, avl->nodes[pivot].right));
     return pivot;
 }
 
 static idx_t
-_tree_avl_rotate_left(AVLTree *avl, idx_t x_index) {
+_avl_rotate_left(AVLTree *avl, idx_t x_index) {
     g_rotation_count++;
 
     idx_t pivot = avl->nodes[x_index].right;
@@ -544,13 +570,13 @@ _tree_avl_rotate_left(AVLTree *avl, idx_t x_index) {
     avl->nodes[x_index].right = T2;
 
     // Update heights:
-    avl->nodes[x_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[x_index].left), _tree_avl_get_height(avl, avl->nodes[x_index].right));
-    avl->nodes[pivot].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[pivot].left), _tree_avl_get_height(avl, avl->nodes[pivot].right));
+    avl->nodes[x_index].height = 1 + max(_avl_get_height(avl, avl->nodes[x_index].left), _avl_get_height(avl, avl->nodes[x_index].right));
+    avl->nodes[pivot].height = 1 + max(_avl_get_height(avl, avl->nodes[pivot].left), _avl_get_height(avl, avl->nodes[pivot].right));
     return pivot;
 }
 
 static idx_t
-_tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
+_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
     
     if (node_index == IDX_INVALID) {
         idx_t new_index = avl->elements;
@@ -565,37 +591,37 @@ _tree_avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
     
     /* Binary Search Tree */
     if (key < avl->nodes[node_index].key) {
-        avl->nodes[node_index].left = _tree_avl_insert_recursive(avl, avl->nodes[node_index].left, key);
+        avl->nodes[node_index].left = _avl_insert_recursive(avl, avl->nodes[node_index].left, key);
     } else if (key > avl->nodes[node_index].key) {
-        avl->nodes[node_index].right = _tree_avl_insert_recursive(avl, avl->nodes[node_index].right, key);
+        avl->nodes[node_index].right = _avl_insert_recursive(avl, avl->nodes[node_index].right, key);
     } else {
         return node_index;
     }
     
-    avl->nodes[node_index].height = 1 + max(_tree_avl_get_height(avl, avl->nodes[node_index].left),
-                                             _tree_avl_get_height(avl, avl->nodes[node_index].right));
+    avl->nodes[node_index].height = 1 + max(_avl_get_height(avl, avl->nodes[node_index].left),
+                                             _avl_get_height(avl, avl->nodes[node_index].right));
 
     // Get balance factor to check if rebalancing is needed.
-    int balance = _tree_avl_get_balance(avl, node_index);
+    int balance = _avl_get_balance(avl, node_index);
 
     /* Left Left */
     if (balance > 1 && key < avl->nodes[avl->nodes[node_index].left].key)
-        return _tree_avl_rotate_right(avl, node_index);
+        return _avl_rotate_right(avl, node_index);
 
     /* Right Right */
     if (balance < -1 && key > avl->nodes[avl->nodes[node_index].right].key)
-        return _tree_avl_rotate_left(avl, node_index);
+        return _avl_rotate_left(avl, node_index);
 
     /* Left Right */
     if (balance > 1 && key > avl->nodes[avl->nodes[node_index].left].key) {
-        avl->nodes[node_index].left = _tree_avl_rotate_left(avl, avl->nodes[node_index].left);
-        return _tree_avl_rotate_right(avl, node_index);
+        avl->nodes[node_index].left = _avl_rotate_left(avl, avl->nodes[node_index].left);
+        return _avl_rotate_right(avl, node_index);
     }
 
     /* Right Left */
     if (balance < -1 && key < avl->nodes[avl->nodes[node_index].right].key) {
-        avl->nodes[node_index].right = _tree_avl_rotate_right(avl, avl->nodes[node_index].right);
-        return _tree_avl_rotate_left(avl, node_index);
+        avl->nodes[node_index].right = _avl_rotate_right(avl, avl->nodes[node_index].right);
+        return _avl_rotate_left(avl, node_index);
     }
 
     return node_index;
@@ -611,9 +637,9 @@ tree_avl_insert(AVLTree *avl, int key) {
 
     /* For an empty tree, set the new node as root. */
     if (avl->elements == 0) {
-        avl->tree_root = _tree_avl_insert_recursive(avl, IDX_INVALID, key);
+        avl->tree_root = _avl_insert_recursive(avl, IDX_INVALID, key);
     } else {
-        avl->tree_root = _tree_avl_insert_recursive(avl, avl->tree_root, key);
+        avl->tree_root = _avl_insert_recursive(avl, avl->tree_root, key);
     }
 }
 void
@@ -676,8 +702,8 @@ tree_avl_insert_arr(AVLTree *avl, key_t* arr, size_t size) {
 }
 
 
-double
-tree_avl_test(key_t* arr) {
+void
+avl_test_and_log(key_t* arr, FILE *fptr) {
 
     AVLTree avl;
     clock_t start = 0, end = 0;
@@ -696,10 +722,8 @@ tree_avl_test(key_t* arr) {
         tree_avl_destroy(&avl);
     }
 
-    printf("=> Average Number of Rotations: %d\n", g_rotation_count/AVERAGE);
-
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    return total_time / AVERAGE;
+    fprintf(fptr, "AVL Tree = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
 }
 
 /* Red Black Tree Implementation */
@@ -882,8 +906,8 @@ tree_rb_search(RBTree *tree, int key) {
 }
 
 
-double
-rb_test(key_t* arr) {
+void
+rb_test_and_log(key_t* arr, FILE *fptr) {
 
     RBTree vp;
     clock_t start = 0, end = 0;
@@ -902,69 +926,207 @@ rb_test(key_t* arr) {
         tree_rb_destroy(&vp);
     }
 
-    printf("=> Average Number of Rotations: %d\n", g_rotation_count/AVERAGE);
+    double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
+    fprintf(fptr, "RB Tree = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
+}
+
+/* Treap Functions */
+Treap
+tree_treap_create(int inicial_capacity) {
+    Treap new_treap;
+    new_treap.nodes = (TreapNode*) malloc( sizeof(TreapNode) * inicial_capacity );
+    if (new_treap.nodes == NULL) {
+        perror("Failed to allocated Treap.");
+        exit(EXIT_FAILURE);
+    }
+
+    new_treap.tree_root = IDX_INVALID; // garante
+    new_treap.elements = 0;
+    new_treap.capacity = inicial_capacity;
+
+    TreapNode* end = new_treap.nodes + inicial_capacity;
+    for (TreapNode *ptr = new_treap.nodes; ptr != end; ptr++) {
+        *ptr = (TreapNode) {0, 0, IDX_INVALID, IDX_INVALID};
+    }
+
+    return new_treap;
+}
+
+void
+tree_treap_resize(Treap *treap) {
+    /* Do nothing if at max capacity */
+    if (treap->capacity == IDX_INVALID-1) return;
+
+    idx_t new_capacity = treap->capacity * RESIZE_FACTOR;
+
+    /* no caso de haver overflow */
+    if (new_capacity < treap->capacity) {
+        new_capacity = IDX_INVALID-1; // maximum capacity
+    }
+
+    /* realloc */
+    TreapNode *new_nodes = (TreapNode*) realloc(treap->nodes, sizeof(TreapNode)*new_capacity);
+    if (new_nodes == NULL) {
+        perror("Failed to realloc new nodes.");
+        exit(EXIT_FAILURE);
+    }
+
+    treap->nodes = new_nodes;
+
+    /* inicializar */
+    TreapNode *end = treap->nodes + new_capacity;
+    for (TreapNode *ptr = treap->nodes+treap->capacity+1; ptr != end; ptr++) {
+        *ptr = (TreapNode) {0, 0, IDX_INVALID, IDX_INVALID};
+    }
+
+    treap->capacity = new_capacity;
+}
+
+void
+tree_treap_destroy(Treap *treap) {
+    free(treap->nodes);
+    treap->capacity = 0;
+    treap->elements = 0;
+}
+
+static idx_t
+_treap_rotate_right(Treap *treap, idx_t y_idx) {
+    g_rotation_count++;
+    TreapNode *nodes = treap->nodes;
+    TreapNode *y = &nodes[y_idx];
+    idx_t x_idx = y->left;
+    TreapNode *x = &nodes[x_idx];
+    
+    y->left = x->right;
+    x->right = y_idx;
+    
+    return x_idx;
+}
+
+static idx_t
+_treap_rotate_left(Treap *treap, idx_t x_idx) {
+    g_rotation_count++;
+    TreapNode *nodes = treap->nodes;
+    TreapNode *x = &nodes[x_idx];
+    idx_t y_idx = x->right;
+    TreapNode *y = &nodes[y_idx];
+    
+    x->right = y->left;
+    y->left = x_idx;
+    
+    return y_idx;
+}
+
+static idx_t
+_treap_insert_recursive(Treap *treap, idx_t idx, key_t key) {
+    
+    TreapNode *nodes = treap->nodes;
+
+    /* a ultima chamada atingiu um nó que ainda não existe 
+     * vamos criar este nó e devolver o indice novo */
+    if (idx == IDX_INVALID) {
+        idx_t new_index = treap->elements;
+        treap->elements++;
+
+        nodes[new_index] = (TreapNode) {
+            .key = key,
+            .priority = randint(1, IDX_INVALID-1),
+            .left = IDX_INVALID,
+            .right = IDX_INVALID
+        };
+        return new_index;
+    }
+
+    TreapNode no = nodes[idx];
+
+    if ( key < no.key ) {
+        no.left = _treap_insert_recursive(treap, no.left, key);
+        /* treap property check and rotation */
+        if (nodes[no.left].priority > no.priority) {
+            idx = _treap_rotate_right(treap, idx);
+        }
+    }
+    else if (key > no.key) {
+        no.right = _treap_insert_recursive(treap, no.right, key);
+        if (nodes[no.right].priority > no.priority) {
+            idx = _treap_rotate_left(treap, idx);
+        }
+    } 
+    /* se a key for igual não fazemos nada */
+
+    return idx;
+}
+
+void
+tree_treap_insert(Treap *treap, key_t key) {
+    /* resize se for necessário */
+    if (treap->capacity == treap->elements)    
+        tree_treap_resize(treap);
+
+    treap->tree_root = _treap_insert_recursive(treap, treap->tree_root, key);
+}
+
+void
+treap_test_and_log(key_t* arr, FILE *fptr) {
+
+    Treap treap;
+    clock_t start = 0, end = 0;
+    clock_t total = 0;
+
+    /* Reset global rotation counter */
+    g_rotation_count = 0;
+
+    for (int i = 0; i < AVERAGE; i++) {
+        start = clock();
+        treap = tree_treap_create(TREESIZE);
+        for (idx_t idx = 0; idx < TREESIZE; idx++)
+            tree_treap_insert(&treap, arr[idx]);
+        end = clock();
+
+        total += (end-start);
+        tree_treap_destroy(&treap);
+    }
 
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    return total_time / AVERAGE;
+    fprintf(fptr, "RB Tree = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
 }
 
 int
 main() {
 
     srand(SEED);
-    key_t *key_ptr;
+    key_t *conjunto_a = arr_gen_conj_a(TREESIZE);
+    key_t *conjunto_b = arr_gen_conj_b(TREESIZE);
+    key_t *conjunto_c = arr_gen_conj_c(TREESIZE);
+    key_t *conjunto_d = arr_gen_conj_d(TREESIZE);
 
-    key_ptr = arr_gen_conj_a(TREESIZE);
-    printf("Binary Tree - Conj. A = %0.4lfms\n", tree_binary_test(key_ptr));
-    free(key_ptr);
+    FILE* filelog = fopen("log.txt", "a");
+    fprintf(filelog, "\n=== NEW LOG ===\n");
 
-    key_ptr = arr_gen_conj_b(TREESIZE);
-    printf("Binary Tree - Conj. B = %0.4lfms\n", tree_binary_test(key_ptr));
-    free(key_ptr);
+    binary_test_and_log(conjunto_a, filelog);
+    binary_test_and_log(conjunto_b, filelog);
+    binary_test_and_log(conjunto_c, filelog);
+    binary_test_and_log(conjunto_d, filelog);
 
-    key_ptr = arr_gen_conj_c(TREESIZE);
-    printf("Binary Tree - Conj. C = %0.4lfms\n", tree_binary_test(key_ptr));
-    free(key_ptr);
+    avl_test_and_log(conjunto_a, filelog);
+    avl_test_and_log(conjunto_b, filelog);
+    avl_test_and_log(conjunto_c, filelog);
+    avl_test_and_log(conjunto_d, filelog);
 
-    key_ptr = arr_gen_conj_d(TREESIZE);
-    printf("Binary Tree - Conj. D = %0.4lfms\n", tree_binary_test(key_ptr));
-    free(key_ptr);
+    rb_test_and_log(conjunto_a, filelog);
+    rb_test_and_log(conjunto_b, filelog);
+    rb_test_and_log(conjunto_c, filelog);
+    rb_test_and_log(conjunto_d, filelog);
 
-        /* Test AVL */
-    key_ptr = arr_gen_conj_a(TREESIZE);
-    printf("AVL Tree - Conj. A = %0.4lfms\n", tree_avl_test(key_ptr));
-    free(key_ptr);
+    treap_test_and_log(conjunto_a, filelog);
 
-    key_ptr = arr_gen_conj_b(TREESIZE);
-    printf("AVL Tree - Conj. B = %0.4lfms\n", tree_avl_test(key_ptr));
-    free(key_ptr);
+    free(conjunto_a);
+    free(conjunto_b);
+    free(conjunto_c);
+    free(conjunto_d);
+    fclose(filelog);
 
-    key_ptr = arr_gen_conj_c(TREESIZE);
-    printf("AVL Tree - Conj. C = %0.4lfms\n", tree_avl_test(key_ptr));
-    free(key_ptr);
-
-    key_ptr = arr_gen_conj_d(TREESIZE);
-    printf("AVL Tree - Conj. D = %0.4lfms\n", tree_avl_test(key_ptr));
-    free(key_ptr);
-
-    /* Test Red Black */
-    key_ptr = arr_gen_conj_a(TREESIZE);
-    printf("RB Tree - Conj. A = %0.4lf ms \n", rb_test(key_ptr) );
-    free(key_ptr);
-
-    key_ptr = arr_gen_conj_b(TREESIZE);
-    printf("RB Tree - Conj. B = %0.4lf ms \n", rb_test(key_ptr) );
-    free(key_ptr);
-
-    key_ptr = arr_gen_conj_c(TREESIZE);
-    printf("RB Tree - Conj. C = %0.4lf ms \n", rb_test(key_ptr) );
-    free(key_ptr);
-
-    key_ptr = arr_gen_conj_d(TREESIZE);
-    printf("RB Tree - Conj. D = %0.4lf ms \n", rb_test(key_ptr) );
-    free(key_ptr);
-
-
+    puts("Done!");
     return 0;
 }
 

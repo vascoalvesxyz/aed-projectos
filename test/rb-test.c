@@ -159,8 +159,8 @@ static idx_t _rb_insert_recursive(RBTree *tree, idx_t h, key_t key) {
 
     /* Inserir após encontrar nova folha 
      * (chamada anterior para filho que não existe) */
+    idx_t new_index = tree->elements;
     if (h == IDX_INVALID) {
-        idx_t new_index = tree->elements;
         tree->nodes[new_index].key = key;
         tree->nodes[new_index].left = IDX_INVALID;
         tree->nodes[new_index].right = IDX_INVALID;
