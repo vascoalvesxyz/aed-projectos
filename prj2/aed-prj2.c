@@ -21,7 +21,6 @@
 #define BLACK 0
 #define RED 1
 
-#define DEBUG
 #ifdef DEBUG
 #define AVERAGE 10
 #define TREESIZE 10000
@@ -89,6 +88,7 @@ typedef struct Treap {
 
 /* === HELPER FUNCTIONS === */
 static inline int randint(int a, int b);
+static inline idx_t rand_idx(idx_t a, idx_t b);
 static inline int max(int a, int b);
 static key_t*   arr_gen_conj_a(key_t size); // ordem crescent, pouca repetição
 static key_t*   arr_gen_conj_b(key_t size); // ordem decrescent, pouca repetição
@@ -136,7 +136,7 @@ extern void    tree_rb_insert(RBTree *tree, key_t key);
 extern int     tree_rb_search(RBTree *rb, int key);
 
 /* ===== TREAP ===== */ 
-extern Treap tree_treap_create(int inicial_capacity);
+extern Treap tree_treap_create(idx_t initial_capacity);
 extern void  tree_treap_resize(Treap *treap);
 extern void  tree_treap_destroy(Treap *treap);
 static idx_t _treap_rotate_right(Treap *treap, idx_t x_idx);
@@ -153,6 +153,16 @@ randint(int a, int b) {
         a ^= b;
     }
     return a + rand() % (b - a + 1);
+}
+
+static idx_t rng_state = SEED;
+
+static inline idx_t
+rand_idx(idx_t a, idx_t b) {
+    rng_state ^= rng_state << 13;
+    rng_state ^= rng_state >> 17;
+    rng_state ^= rng_state << 5;
+    return a + rng_state % (b - a + 1);
 }
 
 static inline int
@@ -932,51 +942,49 @@ rb_test_and_log(key_t* arr, FILE *fptr) {
 
 /* Treap Functions */
 Treap
-tree_treap_create(int inicial_capacity) {
+tree_treap_create(idx_t initial_capacity) {
     Treap new_treap;
-    new_treap.nodes = (TreapNode*) malloc( sizeof(TreapNode) * inicial_capacity );
+    new_treap.nodes = (TreapNode*) malloc(sizeof(TreapNode) * initial_capacity);
     if (new_treap.nodes == NULL) {
-        perror("Failed to allocated Treap.");
+        perror("Failed to allocate Treap.");
         exit(EXIT_FAILURE);
     }
 
-    new_treap.tree_root = IDX_INVALID; // garante
+    new_treap.tree_root = IDX_INVALID;
     new_treap.elements = 0;
-    new_treap.capacity = inicial_capacity;
+    new_treap.capacity = initial_capacity;
 
-    TreapNode* end = new_treap.nodes + inicial_capacity;
-    for (TreapNode *ptr = new_treap.nodes; ptr != end; ptr++) {
-        *ptr = (TreapNode) {0, 0, IDX_INVALID, IDX_INVALID};
+    /* inicializar novos nós */
+    TreapNode* endptr = new_treap.nodes + initial_capacity;
+    for (TreapNode *ptr = new_treap.nodes; ptr != endptr; ptr++) {
+        *ptr = (TreapNode){0, 0, IDX_INVALID, IDX_INVALID};
     }
 
     return new_treap;
 }
 
-void
-tree_treap_resize(Treap *treap) {
-    /* Do nothing if at max capacity */
-    if (treap->capacity == IDX_INVALID-1) return;
+void tree_treap_resize(Treap *treap) {
+    /* se a capacity for máxima */
+    if (treap->capacity == IDX_INVALID - 1) return;
 
-    idx_t new_capacity = treap->capacity * RESIZE_FACTOR;
+    idx_t old_capacity = treap->capacity;
+    idx_t new_capacity = (idx_t)(treap->capacity * RESIZE_FACTOR);
 
-    /* no caso de haver overflow */
+    /* se a nova capacity for maior que a capacidade máxima */
     if (new_capacity < treap->capacity) {
-        new_capacity = IDX_INVALID-1; // maximum capacity
+        new_capacity = IDX_INVALID - 1; 
     }
 
-    /* realloc */
-    TreapNode *new_nodes = (TreapNode*) realloc(treap->nodes, sizeof(TreapNode)*new_capacity);
+    TreapNode *new_nodes = (TreapNode*) realloc(treap->nodes, sizeof(TreapNode) * new_capacity);
     if (new_nodes == NULL) {
         perror("Failed to realloc new nodes.");
         exit(EXIT_FAILURE);
     }
-
     treap->nodes = new_nodes;
 
-    /* inicializar */
-    TreapNode *end = treap->nodes + new_capacity;
-    for (TreapNode *ptr = treap->nodes+treap->capacity+1; ptr != end; ptr++) {
-        *ptr = (TreapNode) {0, 0, IDX_INVALID, IDX_INVALID};
+    /* incializar nova memóra */
+    for (idx_t i = old_capacity; i < new_capacity; i++) {
+        treap->nodes[i] = (TreapNode){0, 0, IDX_INVALID, IDX_INVALID};
     }
 
     treap->capacity = new_capacity;
@@ -989,81 +997,107 @@ tree_treap_destroy(Treap *treap) {
     treap->elements = 0;
 }
 
-static idx_t
-_treap_rotate_right(Treap *treap, idx_t y_idx) {
-    g_rotation_count++;
-    TreapNode *nodes = treap->nodes;
-    TreapNode *y = &nodes[y_idx];
-    idx_t x_idx = y->left;
-    TreapNode *x = &nodes[x_idx];
-    
-    y->left = x->right;
-    x->right = y_idx;
-    
-    return x_idx;
-}
 
 static idx_t
-_treap_rotate_left(Treap *treap, idx_t x_idx) {
+_treap_rotate_right(Treap *treap, idx_t no_idx) {
     g_rotation_count++;
+
     TreapNode *nodes = treap->nodes;
-    TreapNode *x = &nodes[x_idx];
-    idx_t y_idx = x->right;
-    TreapNode *y = &nodes[y_idx];
-    
-    x->right = y->left;
-    y->left = x_idx;
-    
-    return y_idx;
+    idx_t pivot_idx = nodes[no_idx].left;
+
+    /* à esquerda agora fica a subtree do pivot */ 
+    nodes[no_idx].left = nodes[pivot_idx].right;
+    /* à direita do pivot fica o nó atual */ 
+    nodes[pivot_idx].right = no_idx;
+
+    /* o pivot não muda de sitio mas pode passar a ser a nova raiz */
+    return pivot_idx;
+}
+
+static idx_t 
+_treap_rotate_left(Treap *treap, idx_t no_idx) {
+    g_rotation_count++;
+
+    TreapNode *nodes = treap->nodes;
+    idx_t pivot_idx = nodes[no_idx].right;
+
+    /* subtree do pivot */ 
+    nodes[no_idx].right = nodes[pivot_idx].left;
+    /* o pivot agora leva ao nó */ 
+    nodes[pivot_idx].left = no_idx;
+
+    /* o pivot pode passar a ser a nova raiz */
+    return pivot_idx;
 }
 
 static idx_t
 _treap_insert_recursive(Treap *treap, idx_t idx, key_t key) {
-    
     TreapNode *nodes = treap->nodes;
 
-    /* a ultima chamada atingiu um nó que ainda não existe 
-     * vamos criar este nó e devolver o indice novo */
+    /* Criamos um novo nó quando quando o idx é inválido,
+     * ou seja, quando o BST tenta inserir numa folha
+     * depois devolvemos o novo indice à chamada anterior desta função*/
     if (idx == IDX_INVALID) {
         idx_t new_index = treap->elements;
         treap->elements++;
-
-        nodes[new_index] = (TreapNode) {
+        nodes[new_index] = (TreapNode){
             .key = key,
-            .priority = randint(1, IDX_INVALID-1),
+            .priority = (idx_t)rand_idx(1, IDX_INVALID - 1),
             .left = IDX_INVALID,
             .right = IDX_INVALID
         };
         return new_index;
     }
 
-    TreapNode no = nodes[idx];
+    /* inserir tipo binary search tree */
+    if (key < nodes[idx].key) {
+        nodes[idx].left = _treap_insert_recursive(treap, nodes[idx].left, key);
 
-    if ( key < no.key ) {
-        no.left = _treap_insert_recursive(treap, no.left, key);
-        /* treap property check and rotation */
-        if (nodes[no.left].priority > no.priority) {
+        /* manter max heap */
+        if (nodes[nodes[idx].left].priority > nodes[idx].priority) {
             idx = _treap_rotate_right(treap, idx);
         }
-    }
-    else if (key > no.key) {
-        no.right = _treap_insert_recursive(treap, no.right, key);
-        if (nodes[no.right].priority > no.priority) {
+    } else if (key > nodes[idx].key) {
+        nodes[idx].right = _treap_insert_recursive(treap, nodes[idx].right, key);
+
+        /* manter max heap */
+        if (nodes[nodes[idx].right].priority > nodes[idx].priority) {
             idx = _treap_rotate_left(treap, idx);
         }
-    } 
-    /* se a key for igual não fazemos nada */
+    }
 
     return idx;
 }
 
+/* inserir nó */
 void
 tree_treap_insert(Treap *treap, key_t key) {
-    /* resize se for necessário */
     if (treap->capacity == treap->elements)    
         tree_treap_resize(treap);
 
     treap->tree_root = _treap_insert_recursive(treap, treap->tree_root, key);
+}
+
+void
+tree_treap_visualize(Treap *treap, idx_t root, int depth, const char *prefix, int is_left) {
+    if (root == IDX_INVALID) return;
+
+    TreapNode *node = &treap->nodes[root];
+
+    // Print current node
+    printf("%s", prefix);
+    printf("%s", (depth == 0) ? "" : (is_left ? "├── " : "└── "));
+    printf("(%d, p=%u)\n", node->key, node->priority);
+
+    // Prepare prefix for child nodes
+    char new_prefix[256];
+    snprintf(new_prefix, sizeof(new_prefix), "%s%s", prefix, (depth == 0) ? "" : (is_left ? "│   " : "    "));
+
+    // Right child (printed first for better tree shape)
+    tree_treap_visualize(treap, node->right, depth + 1, new_prefix, 1);
+
+    // Left child
+    tree_treap_visualize(treap, node->left, depth + 1, new_prefix, 0);
 }
 
 void
@@ -1076,7 +1110,8 @@ treap_test_and_log(key_t* arr, FILE *fptr) {
     /* Reset global rotation counter */
     g_rotation_count = 0;
 
-    for (int i = 0; i < AVERAGE; i++) {
+
+    for (int i = 0; i < 1; i++) {
         start = clock();
         treap = tree_treap_create(TREESIZE);
         for (idx_t idx = 0; idx < TREESIZE; idx++)
@@ -1088,7 +1123,14 @@ treap_test_and_log(key_t* arr, FILE *fptr) {
     }
 
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    fprintf(fptr, "RB Tree = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
+    fprintf(fptr, "TREAP = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
+}
+
+void tree_treap_inorder_print(Treap *treap, idx_t root) {
+    if (root == IDX_INVALID) return;
+    tree_treap_inorder_print(treap, treap->nodes[root].left);
+    printf("%d ", treap->nodes[root].key);
+    tree_treap_inorder_print(treap, treap->nodes[root].right);
 }
 
 int
@@ -1119,6 +1161,9 @@ main() {
     rb_test_and_log(conjunto_d, filelog);
 
     treap_test_and_log(conjunto_a, filelog);
+    treap_test_and_log(conjunto_b, filelog);
+    treap_test_and_log(conjunto_c, filelog);
+    treap_test_and_log(conjunto_d, filelog);
 
     free(conjunto_a);
     free(conjunto_b);
