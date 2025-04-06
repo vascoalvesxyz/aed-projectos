@@ -1,8 +1,11 @@
 CC := gcc
-FLAGS := --std=c99 -O2 --fast-math
+FLAGS := --std=c99 -O2 --fast-math 
 
 .PHONY: install
 
 install:
 	${CC} ${FLAGS} aed-prj2.c -o aed-prj2
+
+debug:
+	${CC} ${FLAGS} -DDEBUG aed-prj2.c -o aed-prj2
 

@@ -1,0 +1,233 @@
+aed-prj2.c:1154:11: error: expected declaration specifiers or ‘...’ before numeric constant
+ 1154 |     srand(3);
+      |           ^
+aed-prj2.c:1156:25: error: initializer element is not constant
+ 1156 |     key_t *conjunto_a = arr_gen_conj_a(g_treesize);
+      |                         ^~~~~~~~~~~~~~
+aed-prj2.c:1157:25: error: initializer element is not constant
+ 1157 |     key_t *conjunto_b = arr_gen_conj_b(g_treesize);
+      |                         ^~~~~~~~~~~~~~
+aed-prj2.c:1158:25: error: initializer element is not constant
+ 1158 |     key_t *conjunto_c = arr_gen_conj_c(g_treesize);
+      |                         ^~~~~~~~~~~~~~
+aed-prj2.c:1159:25: error: initializer element is not constant
+ 1159 |     key_t *conjunto_d = arr_gen_conj_d(g_treesize);
+      |                         ^~~~~~~~~~~~~~
+aed-prj2.c:1161:21: error: initializer element is not constant
+ 1161 |     FILE* filelog = fopen("log.txt", "a");
+      |                     ^~~~~
+aed-prj2.c:1162:21: error: expected ‘)’ before string constant
+ 1162 |     fprintf(filelog, "\n=== NEW LOG === (Treesize = %d, Average = &d)\n", g_treesize, g_average);
+      |                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                     )
+aed-prj2.c:1164:10: error: expected declaration specifiers or ‘...’ before string constant
+ 1164 |     puts("Testing binary search tree...");
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1165:5: warning: data definition has no type or storage class
+ 1165 |     binary_test_and_log(conjunto_a, filelog);
+      |     ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1165:5: error: type defaults to ‘int’ in declaration of ‘binary_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1165:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1165:5: error: conflicting types for ‘binary_test_and_log’; have ‘int()’
+aed-prj2.c:476:1: note: previous definition of ‘binary_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  476 | binary_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1166:5: warning: data definition has no type or storage class
+ 1166 |     binary_test_and_log(conjunto_b, filelog);
+      |     ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1166:5: error: type defaults to ‘int’ in declaration of ‘binary_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1166:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1166:5: error: conflicting types for ‘binary_test_and_log’; have ‘int()’
+aed-prj2.c:476:1: note: previous definition of ‘binary_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  476 | binary_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1167:5: warning: data definition has no type or storage class
+ 1167 |     binary_test_and_log(conjunto_c, filelog);
+      |     ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1167:5: error: type defaults to ‘int’ in declaration of ‘binary_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1167:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1167:5: error: conflicting types for ‘binary_test_and_log’; have ‘int()’
+aed-prj2.c:476:1: note: previous definition of ‘binary_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  476 | binary_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1168:5: warning: data definition has no type or storage class
+ 1168 |     binary_test_and_log(conjunto_d, filelog);
+      |     ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1168:5: error: type defaults to ‘int’ in declaration of ‘binary_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1168:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1168:5: error: conflicting types for ‘binary_test_and_log’; have ‘int()’
+aed-prj2.c:476:1: note: previous definition of ‘binary_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  476 | binary_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1170:10: error: expected declaration specifiers or ‘...’ before string constant
+ 1170 |     puts("Testing AVL tree...");
+      |          ^~~~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1171:5: warning: data definition has no type or storage class
+ 1171 |     avl_test_and_log(conjunto_a, filelog);
+      |     ^~~~~~~~~~~~~~~~
+aed-prj2.c:1171:5: error: type defaults to ‘int’ in declaration of ‘avl_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1171:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1171:5: error: conflicting types for ‘avl_test_and_log’; have ‘int()’
+aed-prj2.c:714:1: note: previous definition of ‘avl_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  714 | avl_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~
+aed-prj2.c:1172:5: warning: data definition has no type or storage class
+ 1172 |     avl_test_and_log(conjunto_b, filelog);
+      |     ^~~~~~~~~~~~~~~~
+aed-prj2.c:1172:5: error: type defaults to ‘int’ in declaration of ‘avl_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1172:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1172:5: error: conflicting types for ‘avl_test_and_log’; have ‘int()’
+aed-prj2.c:714:1: note: previous definition of ‘avl_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  714 | avl_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~
+aed-prj2.c:1173:5: warning: data definition has no type or storage class
+ 1173 |     avl_test_and_log(conjunto_c, filelog);
+      |     ^~~~~~~~~~~~~~~~
+aed-prj2.c:1173:5: error: type defaults to ‘int’ in declaration of ‘avl_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1173:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1173:5: error: conflicting types for ‘avl_test_and_log’; have ‘int()’
+aed-prj2.c:714:1: note: previous definition of ‘avl_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  714 | avl_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~
+aed-prj2.c:1174:5: warning: data definition has no type or storage class
+ 1174 |     avl_test_and_log(conjunto_d, filelog);
+      |     ^~~~~~~~~~~~~~~~
+aed-prj2.c:1174:5: error: type defaults to ‘int’ in declaration of ‘avl_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1174:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1174:5: error: conflicting types for ‘avl_test_and_log’; have ‘int()’
+aed-prj2.c:714:1: note: previous definition of ‘avl_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  714 | avl_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~
+aed-prj2.c:1176:10: error: expected declaration specifiers or ‘...’ before string constant
+ 1176 |     puts("Testing Red-Black tree...");
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1177:5: warning: data definition has no type or storage class
+ 1177 |     rb_test_and_log(conjunto_a, filelog);
+      |     ^~~~~~~~~~~~~~~
+aed-prj2.c:1177:5: error: type defaults to ‘int’ in declaration of ‘rb_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1177:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1177:5: error: conflicting types for ‘rb_test_and_log’; have ‘int()’
+aed-prj2.c:918:1: note: previous definition of ‘rb_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  918 | rb_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~
+aed-prj2.c:1178:5: warning: data definition has no type or storage class
+ 1178 |     rb_test_and_log(conjunto_b, filelog);
+      |     ^~~~~~~~~~~~~~~
+aed-prj2.c:1178:5: error: type defaults to ‘int’ in declaration of ‘rb_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1178:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1178:5: error: conflicting types for ‘rb_test_and_log’; have ‘int()’
+aed-prj2.c:918:1: note: previous definition of ‘rb_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  918 | rb_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~
+aed-prj2.c:1179:5: warning: data definition has no type or storage class
+ 1179 |     rb_test_and_log(conjunto_c, filelog);
+      |     ^~~~~~~~~~~~~~~
+aed-prj2.c:1179:5: error: type defaults to ‘int’ in declaration of ‘rb_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1179:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1179:5: error: conflicting types for ‘rb_test_and_log’; have ‘int()’
+aed-prj2.c:918:1: note: previous definition of ‘rb_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  918 | rb_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~
+aed-prj2.c:1180:5: warning: data definition has no type or storage class
+ 1180 |     rb_test_and_log(conjunto_d, filelog);
+      |     ^~~~~~~~~~~~~~~
+aed-prj2.c:1180:5: error: type defaults to ‘int’ in declaration of ‘rb_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1180:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1180:5: error: conflicting types for ‘rb_test_and_log’; have ‘int()’
+aed-prj2.c:918:1: note: previous definition of ‘rb_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+  918 | rb_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~
+aed-prj2.c:1182:10: error: expected declaration specifiers or ‘...’ before string constant
+ 1182 |     puts("Testing RB search tree...");
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1183:5: warning: data definition has no type or storage class
+ 1183 |     treap_test_and_log(conjunto_a, filelog);
+      |     ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1183:5: error: type defaults to ‘int’ in declaration of ‘treap_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1183:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1183:5: error: conflicting types for ‘treap_test_and_log’; have ‘int()’
+aed-prj2.c:1102:1: note: previous definition of ‘treap_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+ 1102 | treap_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1184:5: warning: data definition has no type or storage class
+ 1184 |     treap_test_and_log(conjunto_b, filelog);
+      |     ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1184:5: error: type defaults to ‘int’ in declaration of ‘treap_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1184:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1184:5: error: conflicting types for ‘treap_test_and_log’; have ‘int()’
+aed-prj2.c:1102:1: note: previous definition of ‘treap_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+ 1102 | treap_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1185:5: warning: data definition has no type or storage class
+ 1185 |     treap_test_and_log(conjunto_c, filelog);
+      |     ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1185:5: error: type defaults to ‘int’ in declaration of ‘treap_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1185:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1185:5: error: conflicting types for ‘treap_test_and_log’; have ‘int()’
+aed-prj2.c:1102:1: note: previous definition of ‘treap_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+ 1102 | treap_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1186:5: warning: data definition has no type or storage class
+ 1186 |     treap_test_and_log(conjunto_d, filelog);
+      |     ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1186:5: error: type defaults to ‘int’ in declaration of ‘treap_test_and_log’ [-Wimplicit-int]
+aed-prj2.c:1186:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1186:5: error: conflicting types for ‘treap_test_and_log’; have ‘int()’
+aed-prj2.c:1102:1: note: previous definition of ‘treap_test_and_log’ with type ‘void(key_t *, FILE *)’ {aka ‘void(int *, FILE *)’}
+ 1102 | treap_test_and_log(key_t* arr, FILE *fptr) {
+      | ^~~~~~~~~~~~~~~~~~
+aed-prj2.c:1188:5: warning: data definition has no type or storage class
+ 1188 |     free(conjunto_a);
+      |     ^~~~
+aed-prj2.c:1188:5: error: type defaults to ‘int’ in declaration of ‘free’ [-Wimplicit-int]
+aed-prj2.c:1188:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1188:5: error: conflicting types for ‘free’; have ‘int()’
+In file included from aed-prj2.c:13:
+/usr/include/stdlib.h:687:13: note: previous declaration of ‘free’ with type ‘void(void *)’
+  687 | extern void free (void *__ptr) __THROW;
+      |             ^~~~
+aed-prj2.c:1189:5: warning: data definition has no type or storage class
+ 1189 |     free(conjunto_b);
+      |     ^~~~
+aed-prj2.c:1189:5: error: type defaults to ‘int’ in declaration of ‘free’ [-Wimplicit-int]
+aed-prj2.c:1189:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1189:5: error: conflicting types for ‘free’; have ‘int()’
+/usr/include/stdlib.h:687:13: note: previous declaration of ‘free’ with type ‘void(void *)’
+  687 | extern void free (void *__ptr) __THROW;
+      |             ^~~~
+aed-prj2.c:1190:5: warning: data definition has no type or storage class
+ 1190 |     free(conjunto_c);
+      |     ^~~~
+aed-prj2.c:1190:5: error: type defaults to ‘int’ in declaration of ‘free’ [-Wimplicit-int]
+aed-prj2.c:1190:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1190:5: error: conflicting types for ‘free’; have ‘int()’
+/usr/include/stdlib.h:687:13: note: previous declaration of ‘free’ with type ‘void(void *)’
+  687 | extern void free (void *__ptr) __THROW;
+      |             ^~~~
+aed-prj2.c:1191:5: warning: data definition has no type or storage class
+ 1191 |     free(conjunto_d);
+      |     ^~~~
+aed-prj2.c:1191:5: error: type defaults to ‘int’ in declaration of ‘free’ [-Wimplicit-int]
+aed-prj2.c:1191:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1191:5: error: conflicting types for ‘free’; have ‘int()’
+/usr/include/stdlib.h:687:13: note: previous declaration of ‘free’ with type ‘void(void *)’
+  687 | extern void free (void *__ptr) __THROW;
+      |             ^~~~
+aed-prj2.c:1193:5: warning: data definition has no type or storage class
+ 1193 |     fclose(filelog);
+      |     ^~~~~~
+aed-prj2.c:1193:5: error: type defaults to ‘int’ in declaration of ‘fclose’ [-Wimplicit-int]
+aed-prj2.c:1193:5: error: parameter names (without types) in function declaration [-Wdeclaration-missing-parameter-type]
+aed-prj2.c:1195:10: error: expected declaration specifiers or ‘...’ before string constant
+ 1195 |     puts("Done!");
+      |          ^~~~~~~
+aed-prj2.c:1196:12: error: expected declaration specifiers or ‘...’ before string constant
+ 1196 |     system("notify-send -u critical done");
+      |            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aed-prj2.c:1197:5: error: expected identifier or ‘(’ before ‘return’
+ 1197 |     return 0;
+      |     ^~~~~~
+aed-prj2.c:1198:1: error: expected identifier or ‘(’ before ‘}’ token
+ 1198 | }
+      | ^
+make: *** [Makefile:7: install] Error 1

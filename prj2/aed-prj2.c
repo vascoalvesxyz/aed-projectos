@@ -15,22 +15,20 @@
 #include <time.h>
 
 #define RESIZE_FACTOR 1.61803
+
 #define IDX_INVALID 4294967295
+
 #define SEED 95911405
 
 #define BLACK 0
 #define RED 1
 
-#ifdef DEBUG
-#define AVERAGE 10
-#define TREESIZE 10000
-#else
-#define AVERAGE 5
-#define TREESIZE 1000000
-#endif 
-
 typedef uint32_t idx_t;
 typedef int32_t key_t;
+
+static int32_t g_treesize;
+static int32_t g_average;
+static uint32_t g_rotation_count = 0;
 
 typedef struct BinTreeNode {
     key_t data;         
@@ -90,10 +88,10 @@ typedef struct Treap {
 static inline int randint(int a, int b);
 static inline idx_t rand_idx(idx_t a, idx_t b);
 static inline int max(int a, int b);
-static key_t*   arr_gen_conj_a(key_t size); // ordem crescent, pouca repetição
-static key_t*   arr_gen_conj_b(key_t size); // ordem decrescent, pouca repetição
-static key_t*   arr_gen_conj_c(key_t size); // ordem aleatoria, pouca repetição
-static key_t*   arr_gen_conj_d(key_t size); // ordem aleatoria, 90% repetidos
+static key_t*   arr_gen_conj_a(const key_t size); // ordem crescent, pouca repetição
+static key_t*   arr_gen_conj_b(const key_t size); // ordem decrescent, pouca repetição
+static key_t*   arr_gen_conj_c(const key_t size); // ordem aleatoria, pouca repetição
+static key_t*   arr_gen_conj_d(const key_t size); // ordem aleatoria, 90% repetidos
 static void     arr_print(key_t* arr, key_t size);
 
 /* ===== BINARY TREE ===== */
@@ -171,7 +169,7 @@ max(int a, int b) {
 }
 
 static key_t*
-arr_gen_conj_a(key_t size) {
+arr_gen_conj_a(const key_t size) {
     key_t* new_arr = (key_t*) malloc( sizeof(key_t) * size);
     
     if (new_arr) {
@@ -186,7 +184,7 @@ arr_gen_conj_a(key_t size) {
 } 
 
 static key_t*
-arr_gen_conj_b(key_t size) {
+arr_gen_conj_b(const key_t size) {
     key_t* new_arr = (key_t*) malloc( sizeof(key_t) * size);
     
     if (new_arr) {
@@ -202,7 +200,7 @@ arr_gen_conj_b(key_t size) {
 }
 
 static key_t*
-arr_gen_conj_c(key_t size) {
+arr_gen_conj_c(const key_t size) {
 
     /* Array crescente com repetição minima */
     key_t* new_arr = arr_gen_conj_a(size);
@@ -340,8 +338,9 @@ tree_binary_insert(BinTree *btree, key_t key) {
 
 void
 tree_binary_insert_arr(BinTree *btree, key_t* arr, key_t size) {
-    for (key_t k = 0; k < size; k++ )
+    for (key_t k = 0; k < size; k++ ) {
         tree_binary_insert(btree, arr[k]);
+    }
 }
 
 void
@@ -480,10 +479,10 @@ binary_test_and_log(key_t* arr, FILE *fptr) {
     clock_t start = 0, end = 0;
     clock_t total = 0;
 
-    for (int i = 0; i < AVERAGE; i++) {
+    for (int i = 0; i < g_average; i++) {
         start = clock();
-        btree = tree_binary_create(TREESIZE);
-        tree_binary_insert_arr(&btree, arr, TREESIZE);
+        btree = tree_binary_create(g_treesize);
+        tree_binary_insert_arr(&btree, arr, g_treesize);
         end = clock();
 
         total += (end-start);
@@ -491,7 +490,7 @@ binary_test_and_log(key_t* arr, FILE *fptr) {
     }
 
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    fprintf(fptr, "Binary Tree = %0.4lfms\t(0 rotations)\n", total_time/AVERAGE);
+    fprintf(fptr, "Binary Tree = %0.4lfms\t(0 rotations)\n", total_time/g_average);
 }
 
 AVLTree
@@ -549,7 +548,6 @@ _avl_get_balance(AVLTree* avl, idx_t index) {
     return _avl_get_height(avl, avl->nodes[index].left) - _avl_get_height(avl, avl->nodes[index].right);
 }
 
-static uint32_t g_rotation_count = 0;
 
 static idx_t
 _avl_rotate_right(AVLTree *avl, idx_t node_idx) {
@@ -722,10 +720,10 @@ avl_test_and_log(key_t* arr, FILE *fptr) {
     /* Reset global rotation counter */
     g_rotation_count = 0;
 
-    for (int i = 0; i < AVERAGE; i++) {
+    for (int i = 0; i < g_average; i++) {
         start = clock();
         avl = tree_avl_create(10);
-        tree_avl_insert_arr(&avl, arr, TREESIZE);
+        tree_avl_insert_arr(&avl, arr, g_treesize);
         end = clock();
 
         total += (end-start);
@@ -733,7 +731,7 @@ avl_test_and_log(key_t* arr, FILE *fptr) {
     }
 
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    fprintf(fptr, "AVL Tree = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
+    fprintf(fptr, "AVL Tree = %0.4lfms\t(%d rotations)\n", total_time/g_average, g_rotation_count/g_average);
 }
 
 /* Red Black Tree Implementation */
@@ -926,9 +924,9 @@ rb_test_and_log(key_t* arr, FILE *fptr) {
     /* Reset global rotation counter */
     g_rotation_count = 0;
 
-    for (int i = 0; i < AVERAGE; i++) { start = clock();
-        vp = tree_rb_create(TREESIZE);
-        for (idx_t idx = 0; idx < TREESIZE; idx++)
+    for (int i = 0; i < g_average; i++) { start = clock();
+        vp = tree_rb_create(g_treesize);
+        for (idx_t idx = 0; idx < g_treesize; idx++)
             tree_rb_insert(&vp, arr[idx]);
         end = clock();
 
@@ -937,7 +935,7 @@ rb_test_and_log(key_t* arr, FILE *fptr) {
     }
 
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    fprintf(fptr, "RB Tree = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
+    fprintf(fptr, "RB Tree = %0.4lfms\t(%d rotations)\n", total_time/g_average, g_rotation_count/g_average);
 }
 
 /* Treap Functions */
@@ -1113,8 +1111,8 @@ treap_test_and_log(key_t* arr, FILE *fptr) {
 
     for (int i = 0; i < 1; i++) {
         start = clock();
-        treap = tree_treap_create(TREESIZE);
-        for (idx_t idx = 0; idx < TREESIZE; idx++)
+        treap = tree_treap_create(g_treesize);
+        for (idx_t idx = 0; idx < g_treesize; idx++)
             tree_treap_insert(&treap, arr[idx]);
         end = clock();
 
@@ -1123,7 +1121,7 @@ treap_test_and_log(key_t* arr, FILE *fptr) {
     }
 
     double total_time = ((double) total*1000) / CLOCKS_PER_SEC;
-    fprintf(fptr, "TREAP = %0.4lfms\t(%d rotations)\n", total_time/AVERAGE, g_rotation_count/AVERAGE);
+    fprintf(fptr, "TREAP = %0.4lfms\t(%d rotations)\n", total_time/g_average, g_rotation_count/g_average);
 }
 
 void tree_treap_inorder_print(Treap *treap, idx_t root) {
@@ -1134,32 +1132,53 @@ void tree_treap_inorder_print(Treap *treap, idx_t root) {
 }
 
 int
-main() {
+main(int argc, char *argv[]) {
+
+    if (argc != 3) {
+        puts("aed-prej2 [treesize] [average]");
+        exit(EXIT_FAILURE);
+    }
+
+    g_treesize = atoi(argv[1]);
+    g_average = atoi(argv[2]);
+
+    if (g_treesize < 0) {
+        puts("Invalid tree size.");
+        exit(EXIT_FAILURE);
+    } else if (g_average < 0) {
+        puts("Invalid average.");
+        exit(EXIT_FAILURE);
+    }
 
     srand(SEED);
-    key_t *conjunto_a = arr_gen_conj_a(TREESIZE);
-    key_t *conjunto_b = arr_gen_conj_b(TREESIZE);
-    key_t *conjunto_c = arr_gen_conj_c(TREESIZE);
-    key_t *conjunto_d = arr_gen_conj_d(TREESIZE);
+
+    key_t *conjunto_a = arr_gen_conj_a(g_treesize);
+    key_t *conjunto_b = arr_gen_conj_b(g_treesize);
+    key_t *conjunto_c = arr_gen_conj_c(g_treesize);
+    key_t *conjunto_d = arr_gen_conj_d(g_treesize);
 
     FILE* filelog = fopen("log.txt", "a");
-    fprintf(filelog, "\n=== NEW LOG ===\n");
+    fprintf(filelog, "\n=== NEW LOG === (Treesize = %d, Average = &d)\n", g_treesize, g_average);
 
+    puts("Testing binary search tree...");
     binary_test_and_log(conjunto_a, filelog);
     binary_test_and_log(conjunto_b, filelog);
     binary_test_and_log(conjunto_c, filelog);
     binary_test_and_log(conjunto_d, filelog);
 
+    puts("Testing AVL tree...");
     avl_test_and_log(conjunto_a, filelog);
     avl_test_and_log(conjunto_b, filelog);
     avl_test_and_log(conjunto_c, filelog);
     avl_test_and_log(conjunto_d, filelog);
 
+    puts("Testing Red-Black tree...");
     rb_test_and_log(conjunto_a, filelog);
     rb_test_and_log(conjunto_b, filelog);
     rb_test_and_log(conjunto_c, filelog);
     rb_test_and_log(conjunto_d, filelog);
 
+    puts("Testing RB search tree...");
     treap_test_and_log(conjunto_a, filelog);
     treap_test_and_log(conjunto_b, filelog);
     treap_test_and_log(conjunto_c, filelog);
@@ -1169,9 +1188,11 @@ main() {
     free(conjunto_b);
     free(conjunto_c);
     free(conjunto_d);
+
     fclose(filelog);
 
     puts("Done!");
+    system("notify-send -u critical done");
     return 0;
 }
 
