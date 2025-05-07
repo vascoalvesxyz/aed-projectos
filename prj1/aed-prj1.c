@@ -34,6 +34,7 @@ int range_check_missing_checksum(int* seq, size_t len);
 
 int
 range_check_missing_naive(int* seq, size_t len) {
+
   int min = *seq, max = *seq;
   for (int *ptr = seq, *end_ptr = seq + len; ptr != end_ptr; ptr++) {
     if (*ptr < min) min = *ptr; 
@@ -44,18 +45,18 @@ range_check_missing_naive(int* seq, size_t len) {
   int* end_ptr = seq + len;
   int found;
 
-  int i;
+    int i;
 
-  for (i = min; i <= max; i++) {
+    for (i = min; i <= max; i++) {
 
-    /* Check if is in sequence */
-    found = FALSE;
-    for (ptr = seq; ptr != end_ptr; ptr++) {
-      if (*ptr == i) {
-        found = TRUE;
-        break;
-      }
-    }
+        /* Check if is in sequence */
+        found = FALSE;
+        for (ptr = seq; ptr != end_ptr; ptr++) {
+            if (*ptr == i) {
+                found = TRUE;
+                break;
+            }
+        }
 
     if (found == FALSE) return i;
   }
@@ -84,10 +85,8 @@ range_check_missing_checksum(int* seq, size_t len) {
   int64_t arr_sum = 0;
 
   for (int *ptr = seq, *end_ptr = seq + len; ptr != end_ptr; ptr++) {
-
     if (*ptr < min) min = *ptr; 
     if (*ptr > max) max = *ptr; 
-    
     arr_sum += *ptr;
   }
 

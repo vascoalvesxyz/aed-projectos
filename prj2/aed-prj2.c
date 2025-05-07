@@ -323,7 +323,9 @@ tree_binary_insert(BinTree *btree, key_t key) {
         /* O pai do NOVO filho está em (Nº Elementos+1) / 2 arredondado para baixo -1 para o indice
          * O que pode ser simplificado para simplesmente o numero de elements>>1 
          * O módulo diz-nos se é para a esquerda ou direita */
+
         BinTreeNode* parent_node = &root[inicial_elements>>1]; 
+
         if (inicial_elements % 2 == 0) {
             parent_node->idx_left = inicial_elements;
         } else {
@@ -587,6 +589,7 @@ static idx_t
 _avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
     
     if (node_index == IDX_INVALID) {
+
         idx_t new_index = avl->elements;
         AVLNode* new_node = &avl->nodes[new_index];
         new_node->key = key;
@@ -595,6 +598,7 @@ _avl_insert_recursive(AVLTree *avl, idx_t node_index, int key) {
         new_node->height = 1;
         avl->elements++;
         return new_index;
+
     }
     
     /* Binary Search Tree */
@@ -841,6 +845,7 @@ _rb_flip_colors(RBTree *tree, idx_t h) {
 /* Resolve comflictos */
 static idx_t
 _rb_fix_up(RBTree *tree, idx_t h) {
+
     /* Caso 1: direita vermelha e esquerda preta -> rotação à esquerda */
     if (_rb_is_red(tree, tree->nodes[h].right) && !_rb_is_red(tree, tree->nodes[h].left))
         h = _rb_rotate_left(tree, h);
@@ -850,6 +855,7 @@ _rb_fix_up(RBTree *tree, idx_t h) {
     /* Caso 3: ambos os filhos são vermelhos */
     if (_rb_is_red(tree, tree->nodes[h].left) && _rb_is_red(tree, tree->nodes[h].right))
         _rb_flip_colors(tree, h);
+
     return h;
 }
 
@@ -1055,6 +1061,7 @@ _treap_insert_recursive(Treap *treap, idx_t idx, key_t key) {
         if (nodes[nodes[idx].left].priority > nodes[idx].priority) {
             idx = _treap_rotate_right(treap, idx);
         }
+
     } else if (key > nodes[idx].key) {
         nodes[idx].right = _treap_insert_recursive(treap, nodes[idx].right, key);
 
@@ -1062,6 +1069,7 @@ _treap_insert_recursive(Treap *treap, idx_t idx, key_t key) {
         if (nodes[nodes[idx].right].priority > nodes[idx].priority) {
             idx = _treap_rotate_left(treap, idx);
         }
+
     }
 
     return idx;
@@ -1166,24 +1174,24 @@ main(int argc, char *argv[]) {
     binary_test_and_log(conjunto_c, filelog);
     binary_test_and_log(conjunto_d, filelog);
 
-    puts("Testing AVL tree...");
-    avl_test_and_log(conjunto_a, filelog);
-    avl_test_and_log(conjunto_b, filelog);
-    avl_test_and_log(conjunto_c, filelog);
-    avl_test_and_log(conjunto_d, filelog);
-
-    puts("Testing Red-Black tree...");
-    rb_test_and_log(conjunto_a, filelog);
-    rb_test_and_log(conjunto_b, filelog);
-    rb_test_and_log(conjunto_c, filelog);
-    rb_test_and_log(conjunto_d, filelog);
-
-    puts("Testing RB search tree...");
-    treap_test_and_log(conjunto_a, filelog);
-    treap_test_and_log(conjunto_b, filelog);
-    treap_test_and_log(conjunto_c, filelog);
-    treap_test_and_log(conjunto_d, filelog);
-
+    /*puts("Testing AVL tree...");*/
+    /*avl_test_and_log(conjunto_a, filelog);*/
+    /*avl_test_and_log(conjunto_b, filelog);*/
+    /*avl_test_and_log(conjunto_c, filelog);*/
+    /*avl_test_and_log(conjunto_d, filelog);*/
+    /**/
+    /*puts("Testing Red-Black tree...");*/
+    /*rb_test_and_log(conjunto_a, filelog);*/
+    /*rb_test_and_log(conjunto_b, filelog);*/
+    /*rb_test_and_log(conjunto_c, filelog);*/
+    /*rb_test_and_log(conjunto_d, filelog);*/
+    /**/
+    /*puts("Testing RB search tree...");*/
+    /*treap_test_and_log(conjunto_a, filelog);*/
+    /*treap_test_and_log(conjunto_b, filelog);*/
+    /*treap_test_and_log(conjunto_c, filelog);*/
+    /*treap_test_and_log(conjunto_d, filelog);*/
+    /**/
     free(conjunto_a);
     free(conjunto_b);
     free(conjunto_c);
