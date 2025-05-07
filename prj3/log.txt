@@ -1,13 +1,75 @@
-2025/05/07 17:34:18 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=1000	AVG=1	Média Final = 0.003ms
-2025/05/07 17:34:18 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=1000	AVG=1	Média Final = 0.587ms
-2025/05/07 17:34:18 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=1000	AVG=1	Média Final = 0.416ms
-2025/05/07 17:34:18 [RESULTADO]	Quicksort	Conjunto A	SIZE=1000	AVG=1	Média Final = 0.003ms
-2025/05/07 17:34:18 [RESULTADO]	Quicksort	Conjunto B	SIZE=1000	AVG=1	Média Final = 0.825ms
-2025/05/07 17:34:18 [RESULTADO]	Quicksort	Conjunto C	SIZE=1000	AVG=1	Média Final = 0.466ms
-2025/05/07 17:34:18 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=10000	AVG=1	Média Final = 0.020ms
-2025/05/07 17:34:19 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=10000	AVG=1	Média Final = 63.909ms
-2025/05/07 17:34:19 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=10000	AVG=1	Média Final = 29.499ms
-2025/05/07 17:34:19 [RESULTADO]	Quicksort	Conjunto A	SIZE=10000	AVG=1	Média Final = 0.057ms
-2025/05/07 17:34:19 [RESULTADO]	Quicksort	Conjunto B	SIZE=10000	AVG=1	Média Final = 6.431ms
-2025/05/07 17:34:19 [RESULTADO]	Quicksort	Conjunto C	SIZE=10000	AVG=1	Média Final = 2.124ms
-2025/05/07 17:34:19 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=100000	AVG=1	Média Final = 0.395ms
+2025/05/07 19:03:23 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=1000	AVG=1	Média Final = 0.003ms
+2025/05/07 19:03:23 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=1000	AVG=1	Média Final = 0.646ms
+2025/05/07 19:03:23 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=1000	AVG=1	Média Final = 0.300ms
+2025/05/07 19:03:23 [RESULTADO]	Quicksort	Conjunto A	SIZE=1000	AVG=1	Média Final = 0.003ms
+2025/05/07 19:03:23 [RESULTADO]	Quicksort	Conjunto B	SIZE=1000	AVG=1	Média Final = 0.658ms
+2025/05/07 19:03:23 [RESULTADO]	Quicksort	Conjunto C	SIZE=1000	AVG=1	Média Final = 0.336ms
+2025/05/07 19:03:23 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=10000	AVG=1	Média Final = 0.022ms
+2025/05/07 19:03:24 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=10000	AVG=1	Média Final = 64.259ms
+2025/05/07 19:03:24 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=10000	AVG=1	Média Final = 30.969ms
+2025/05/07 19:03:24 [RESULTADO]	Quicksort	Conjunto A	SIZE=10000	AVG=1	Média Final = 1.349ms
+2025/05/07 19:03:24 [RESULTADO]	Quicksort	Conjunto B	SIZE=10000	AVG=1	Média Final = 0.904ms
+2025/05/07 19:03:24 [RESULTADO]	Quicksort	Conjunto C	SIZE=10000	AVG=1	Média Final = 2.086ms
+2025/05/07 19:03:24 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=100000	AVG=1	Média Final = 0.188ms
+2025/05/07 19:03:30 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=100000	AVG=1	Média Final = 6434.299ms
+2025/05/07 19:03:33 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=100000	AVG=1	Média Final = 3291.019ms
+2025/05/07 19:03:33 [RESULTADO]	Quicksort	Conjunto A	SIZE=100000	AVG=1	Média Final = 41.691ms
+2025/05/07 19:03:33 [RESULTADO]	Quicksort	Conjunto B	SIZE=100000	AVG=1	Média Final = 31.104ms
+2025/05/07 19:03:33 [RESULTADO]	Quicksort	Conjunto C	SIZE=100000	AVG=1	Média Final = 28.704ms
+2025/05/07 19:03:34 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=250000	AVG=1	Média Final = 1.161ms
+2025/05/07 19:04:48 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=1000	AVG=1	Média Final = 0.002ms
+2025/05/07 19:04:48 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=1000	AVG=1	Média Final = 0.675ms
+2025/05/07 19:04:48 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=1000	AVG=1	Média Final = 0.344ms
+2025/05/07 19:04:48 [RESULTADO]	Heap Sort	Conjunto A	SIZE=1000	AVG=1	Média Final = 0.094ms
+2025/05/07 19:04:48 [RESULTADO]	Heap Sort	Conjunto B	SIZE=1000	AVG=1	Média Final = 0.102ms
+2025/05/07 19:04:48 [RESULTADO]	Heap Sort	Conjunto C	SIZE=1000	AVG=1	Média Final = 0.107ms
+2025/05/07 19:04:48 [RESULTADO]	Quicksort	Conjunto A	SIZE=1000	AVG=1	Média Final = 0.003ms
+2025/05/07 19:04:48 [RESULTADO]	Quicksort	Conjunto B	SIZE=1000	AVG=1	Média Final = 0.622ms
+2025/05/07 19:04:48 [RESULTADO]	Quicksort	Conjunto C	SIZE=1000	AVG=1	Média Final = 0.311ms
+2025/05/07 19:04:48 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=10000	AVG=1	Média Final = 0.020ms
+2025/05/07 19:04:48 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=10000	AVG=1	Média Final = 62.110ms
+2025/05/07 19:04:48 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=10000	AVG=1	Média Final = 29.244ms
+2025/05/07 19:04:48 [RESULTADO]	Heap Sort	Conjunto A	SIZE=10000	AVG=1	Média Final = 0.977ms
+2025/05/07 19:04:48 [RESULTADO]	Heap Sort	Conjunto B	SIZE=10000	AVG=1	Média Final = 1.255ms
+2025/05/07 19:04:48 [RESULTADO]	Heap Sort	Conjunto C	SIZE=10000	AVG=1	Média Final = 1.432ms
+2025/05/07 19:04:48 [RESULTADO]	Quicksort	Conjunto A	SIZE=10000	AVG=1	Média Final = 1.153ms
+2025/05/07 19:04:48 [RESULTADO]	Quicksort	Conjunto B	SIZE=10000	AVG=1	Média Final = 0.924ms
+2025/05/07 19:04:48 [RESULTADO]	Quicksort	Conjunto C	SIZE=10000	AVG=1	Média Final = 2.174ms
+2025/05/07 19:04:48 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=100000	AVG=1	Média Final = 0.400ms
+2025/05/07 19:04:55 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=100000	AVG=1	Média Final = 6822.005ms
+2025/05/07 19:04:58 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=100000	AVG=1	Média Final = 3450.863ms
+2025/05/07 19:04:58 [RESULTADO]	Heap Sort	Conjunto A	SIZE=100000	AVG=1	Média Final = 15.512ms
+2025/05/07 19:04:58 [RESULTADO]	Heap Sort	Conjunto B	SIZE=100000	AVG=1	Média Final = 15.169ms
+2025/05/07 19:04:58 [RESULTADO]	Heap Sort	Conjunto C	SIZE=100000	AVG=1	Média Final = 26.325ms
+2025/05/07 19:04:58 [RESULTADO]	Quicksort	Conjunto A	SIZE=100000	AVG=1	Média Final = 37.914ms
+2025/05/07 19:04:58 [RESULTADO]	Quicksort	Conjunto B	SIZE=100000	AVG=1	Média Final = 29.397ms
+2025/05/07 19:04:58 [RESULTADO]	Quicksort	Conjunto C	SIZE=100000	AVG=1	Média Final = 27.554ms
+2025/05/07 19:04:58 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=250000	AVG=1	Média Final = 0.456ms
+2025/05/07 19:09:34 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=1000	AVG=10	Média Final = 0.002ms
+2025/05/07 19:09:34 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=1000	AVG=10	Média Final = 0.064ms
+2025/05/07 19:09:34 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=1000	AVG=10	Média Final = 0.032ms
+2025/05/07 19:09:34 [RESULTADO]	Heap Sort	Conjunto A	SIZE=1000	AVG=10	Média Final = 0.097ms
+2025/05/07 19:09:34 [RESULTADO]	Heap Sort	Conjunto B	SIZE=1000	AVG=10	Média Final = 0.096ms
+2025/05/07 19:09:34 [RESULTADO]	Heap Sort	Conjunto C	SIZE=1000	AVG=10	Média Final = 0.102ms
+2025/05/07 19:09:34 [RESULTADO]	Quicksort	Conjunto A	SIZE=1000	AVG=10	Média Final = 0.003ms
+2025/05/07 19:09:34 [RESULTADO]	Quicksort	Conjunto B	SIZE=1000	AVG=10	Média Final = 0.063ms
+2025/05/07 19:09:34 [RESULTADO]	Quicksort	Conjunto C	SIZE=1000	AVG=10	Média Final = 0.035ms
+2025/05/07 19:09:34 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=10000	AVG=10	Média Final = 0.026ms
+2025/05/07 19:09:34 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=10000	AVG=10	Média Final = 6.391ms
+2025/05/07 19:09:34 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=10000	AVG=10	Média Final = 2.975ms
+2025/05/07 19:09:34 [RESULTADO]	Heap Sort	Conjunto A	SIZE=10000	AVG=10	Média Final = 1.136ms
+2025/05/07 19:09:34 [RESULTADO]	Heap Sort	Conjunto B	SIZE=10000	AVG=10	Média Final = 1.131ms
+2025/05/07 19:09:34 [RESULTADO]	Heap Sort	Conjunto C	SIZE=10000	AVG=10	Média Final = 1.149ms
+2025/05/07 19:09:34 [RESULTADO]	Quicksort	Conjunto A	SIZE=10000	AVG=10	Média Final = 1.482ms
+2025/05/07 19:09:34 [RESULTADO]	Quicksort	Conjunto B	SIZE=10000	AVG=10	Média Final = 1.611ms
+2025/05/07 19:09:34 [RESULTADO]	Quicksort	Conjunto C	SIZE=10000	AVG=10	Média Final = 1.514ms
+2025/05/07 19:09:34 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=100000	AVG=10	Média Final = 0.224ms
+2025/05/07 19:09:41 [RESULTADO]	Insertion Sort	Conjunto B	SIZE=100000	AVG=10	Média Final = 705.721ms
+2025/05/07 19:09:45 [RESULTADO]	Insertion Sort	Conjunto C	SIZE=100000	AVG=10	Média Final = 364.519ms
+2025/05/07 19:09:45 [RESULTADO]	Heap Sort	Conjunto A	SIZE=100000	AVG=10	Média Final = 22.910ms
+2025/05/07 19:09:45 [RESULTADO]	Heap Sort	Conjunto B	SIZE=100000	AVG=10	Média Final = 18.478ms
+2025/05/07 19:09:45 [RESULTADO]	Heap Sort	Conjunto C	SIZE=100000	AVG=10	Média Final = 19.338ms
+2025/05/07 19:09:46 [RESULTADO]	Quicksort	Conjunto A	SIZE=100000	AVG=10	Média Final = 49.027ms
+2025/05/07 19:09:47 [RESULTADO]	Quicksort	Conjunto B	SIZE=100000	AVG=10	Média Final = 45.747ms
+2025/05/07 19:09:47 [RESULTADO]	Quicksort	Conjunto C	SIZE=100000	AVG=10	Média Final = 63.168ms
+2025/05/07 19:09:47 [RESULTADO]	Insertion Sort	Conjunto A	SIZE=250000	AVG=10	Média Final = 0.658ms

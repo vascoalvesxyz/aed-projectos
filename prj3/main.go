@@ -10,8 +10,29 @@ import (
 	"io"
 )
 
-const (
-	media int = 1
+type ConjuntoGen struct {
+	nome string
+	fn 	 func(int)[]int 
+}
+
+type Algoritmo struct {
+	nome string
+	fn 	 func([]int)
+}
+
+var (
+	media int = 10
+	tamanhos = []int{1000, 10000, 100000, 250000, 500000, 750000, 1000000}
+	conjuntos = []ConjuntoGen{
+		{"Conjunto A", ConjuntoA},
+		{"Conjunto B", ConjuntoB},
+		{"Conjunto C", ConjuntoC},
+	}
+	algos = []Algoritmo{ 
+		{"Insertion Sort", algoritmos.InsertionSort},
+		{"Heap Sort", algoritmos.HeapSort},
+		{"Quicksort", algoritmos.QuickSort},
+	}
 )
 
 func gerarConjuntoRepetido(size int, repetir float64) ([]int) {
@@ -69,7 +90,7 @@ func TestAlgorithm(alg func([]int), conjGen func(int) ([]int), size int, attempt
 		alg(conj)
 		totalTime += time.Since(start)
 
-		log.Print(conj)
+		// log.Print(conj)
 	}
 
 	return totalTime / time.Duration(attempts) 
@@ -84,32 +105,9 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
 
-	type ConjuntoGen struct {
-		nome string
-		fn 	 func(int)[]int 
-	}
-
-	type Algoritmo struct {
-		nome string
-		fn 	 func([]int)
-	}
-
-	var tamanhos = []int{1000, 10000, 100000, 250000, 500000, 750000, 1000000}
-
-	var conjuntos = []ConjuntoGen{
-		{"Conjunto A", ConjuntoA},
-		{"Conjunto B", ConjuntoB},
-		{"Conjunto C", ConjuntoC},
-	}
-
-	var algoritmos = []Algoritmo{ 
-		{"Insertion Sort", algoritmos.InsertionSort},
-		// {"Heap Sort", algoritmos.HeapSort},
-		{"Quicksort", algoritmos.QuickSort},
-	}
 
 	for _, tamanho := range tamanhos {
-		for _, algoritmo := range algoritmos {
+		for _, algoritmo := range algos {
 			for _, conjunto := range conjuntos {
 				res := TestAlgorithm(algoritmo.fn, conjunto.fn, tamanho, media)
 				log.Printf("[RESULTADO]\t%s\t%s\tSIZE=%d\tAVG=%d\tMédia Final = %.3fms\n",

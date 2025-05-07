@@ -5,14 +5,12 @@ var (
 )
 
 func swap(arr []int, i int, j int) {
-	temp := arr[i]
-	arr[i] = arr[j]
-	arr[j] = temp
+	arr[i], arr[j] = arr[j], arr[i]
 }
 
-func partition(arr []int, low int, high int) int {
+func partition(arr []int, low int, high int) (int,int) {
 
-	/* Optimização 2: mediana de 3 */
+	/* Optimização 3: mediana de 3 */
     mid := low + (high-low)/2
     if arr[low] > arr[mid] {
         swap(arr, low, mid)
@@ -26,23 +24,26 @@ func partition(arr []int, low int, high int) int {
     swap(arr, mid, high)
     pivot := arr[high]
 
-    i := low
-    j := high - 1
-    for {
-        for i++; arr[i] < pivot; i++ {}
-        for j--; arr[j] > pivot; j-- {}
+	/* Optimização 4: dutch national flag */
+	i := low      // primeiro elmento
+	j := low      // elemento atual
+	k := high - 1 // ultimo elemento
 
-        
-        if i >= j {
-            break
-        }
-        
-		if (arr[i] == pivot) {
-			
+	for j <= k {
+		if arr[j] < pivot {
+			swap(arr, i, j)
+			i++
+			j++
+		} else if arr[j] > pivot {
+			swap(arr, j, k)
+			k--
+		} else {
+			j++
 		}
+	}
 
-        swap(arr, i, j)
-    }
+	swap(arr, j, high)
+	return i, j
 }
 
 
@@ -58,11 +59,10 @@ func quicksort(arr []int, low int, high int) {
 		return
 	}
 
-	pivot := partition(arr, low, high)
-
-	quicksort(arr, low+1, pivot)
-	quicksort(arr, pivot, high-1)
-
+	/* Optimiazação 2 */
+	left, right := partition(arr, low, high)
+	quicksort(arr, low, left-1)   // Sort elements less than pivot
+	quicksort(arr, right+1, high) // Sort elements greater than pivot
 }
 
 func QuickSort(arr []int) {
