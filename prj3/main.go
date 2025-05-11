@@ -35,6 +35,17 @@ var (
 	}
 )
 
+func isSorted(arr []int) (bool) {
+	i := 0
+	for arr[i] <= arr[i+1] {
+		i++
+		if i == len(arr)-1 {
+			return true
+		}
+	}
+	return false
+}
+
 func gerarConjuntoRepetido(size int, repetir float64) ([]int) {
 	if repetir > 1 || repetir < 0 {
 		panic("[gerarConjuntoRepetido] repetir deve ser uma percentagem ente 0 e 1 válida")
@@ -88,6 +99,9 @@ func TestAlgorithm(alg func([]int), conjGen func(int) ([]int), size int, attempt
 
 		start := time.Now()
 		alg(conj)
+		if (!isSorted(conj)) {
+			panic("Conjunto não ordenado?")
+		}
 		totalTime += time.Since(start)
 
 		// log.Print(conj)
